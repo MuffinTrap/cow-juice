@@ -21,6 +21,8 @@ public:
     Texture *ufoTexture;
     Scene *cowScene;
     Scene *terrainScene;
+    Sprite* iceCreamMeter;
+    Sprite* grassSprite;
 
     Menu *debugMenu;
 

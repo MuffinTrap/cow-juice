@@ -35,6 +35,9 @@ void SaucerGame::init() {
     ufoScene = mgdl_LoadFBX("assets/Ufo.fbx");
     Scene_SetMaterialTexture(ufoScene, "Material", ufoTexture);
     Scene_AddChildNode(mainScene, mainScene->rootNode, ufoScene->rootNode);
+
+    iceCreamMeter = mgdl_LoadSprite("assets/IceCreamMeter.png", 64, 16);
+    grassSprite = mgdl_LoadSprite("assets/Grass.png", 16, 16);
 }
 
 void SaucerGame::update() {
@@ -114,6 +117,17 @@ void SaucerGame::draw() {
     Scene_Draw(mainScene);
     glPopMatrix();
 
+    // Grass rendering (for now we just have one spinning)
+    glDisable(GL_CULL_FACE);
+    //for TODO: Go through all spawned grass
+    glPushMatrix();
+    glTranslatef(3.0f, 0.0f, 0.0f);
+    glRotatef(mgdl_GetElapsedSeconds() * 180.0f, 0.0f, 0.0f, 1.0f);
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+    // TODO: Animate grass frames
+    Sprite_Draw3D(grassSprite, 0, 1.0f, Centered, RJustify, Color_GetDefaultColor(Color_White));
+    glPopMatrix();
+    glEnable(GL_CULL_FACE);
 
     mgdl_InitOrthoProjection();
     glMatrixMode(GL_MODELVIEW);
@@ -121,6 +135,11 @@ void SaucerGame::draw() {
     Menu_SetActive(debugMenu);
     Menu_Start(0, mgdl_GetScreenHeight(), mgdl_GetScreenWidth());
     Menu_Text(debugstream.str().c_str());
+
+    // Draw UI
+    mgdl_glSetAlphaTest(true);
+    mgdl_glSetTransparency(true);
+    Sprite_Draw2D(iceCreamMeter, 0, 196, 406, 64, LJustify, RJustify, Color_GetDefaultColor(Color_White));
 }
 
 void SaucerGame::quit() {
