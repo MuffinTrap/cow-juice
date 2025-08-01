@@ -1,8 +1,10 @@
 #pragma once
 
+#include "mgdl/mgdl-gui.h"
 #include "mgdl/mgdl-texture.h"
 #include "mgdl/mgdl-transform.h"
 #include <mgdl.h>
+#include <sstream>
 
 class SaucerGame {
 public:
@@ -18,4 +20,7 @@ public:
     Scene *ufoScene;
     Texture *ufoTexture;
 
+    Menu *debugMenu;
+
+    std::stringstream debugstream;
 };
