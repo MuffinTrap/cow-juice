@@ -22,7 +22,7 @@ void SaucerGame::init() {
 
     mainScene = Scene_CreateEmpty();
     
-    ufoTexture = mgdl_LoadTexture("assets/Ufo.png", TextureFilterModes::Nearest);
+    ufoTexture = mgdl_LoadTexture("assets/Ufo.png", TextureFilterModes::Linear);
 
     terrainScene = mgdl_LoadFBX("assets/Plane.fbx");
     Scene_SetMaterialTexture(terrainScene, "Material", ufoTexture);
@@ -106,6 +106,7 @@ void SaucerGame::draw() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glShadeModel(GL_FLAT);
+    mgdl_glSetTransparency(true);
 
     glColor3f(1.0f, 1.0f, 1.0f);
 
