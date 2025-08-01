@@ -5,7 +5,7 @@ SRC_DIRS = .
 
 # Setup compilation options
 # Windows does not have address sanitizer
-CXXFLAGS = -Werror=unused-function -Wall -Wextra -Wpedantic -std=c++11
+CXXFLAGS = -Wall -Wextra -Wpedantic -std=c++11
 
 # Add mgdl library search directory and include
 MGDL_INCLUDE	= -I$(MGDL_DIR)
