@@ -19,6 +19,8 @@ public:
     
     Scene *ufoScene;
     Texture *ufoTexture;
+    Scene *cowScene;
+    Scene *terrainScene;
 
     Menu *debugMenu;
 

@@ -7,6 +7,7 @@
 #include "mgdl/mgdl-node.h"
 #include "mgdl/mgdl-opengl_util.h"
 #include "mgdl/mgdl-scene.h"
+#include "mgdl/mgdl-types.h"
 #include "mgdl/mgdl-util.h"
 #include "mgdl/mgdl-vectorfunctions.h"
 #include <GL/gl.h>
@@ -20,9 +21,18 @@ void SaucerGame::init() {
     debugMenu = Menu_CreateDefault();
 
     mainScene = Scene_CreateEmpty();
-
-    ufoScene = mgdl_LoadFBX("assets/Ufo.fbx");
+    
     ufoTexture = mgdl_LoadTexture("assets/Ufo.png", TextureFilterModes::Nearest);
+
+    terrainScene = mgdl_LoadFBX("assets/Plane.fbx");
+    Scene_SetMaterialTexture(terrainScene, "Material", ufoTexture);
+    Scene_AddChildNode(mainScene, mainScene->rootNode, terrainScene->rootNode);
+    
+    cowScene = mgdl_LoadFBX("assets/Cow.fbx");
+    Scene_SetMaterialTexture(cowScene, "Material", ufoTexture);
+    Scene_AddChildNode(mainScene, mainScene->rootNode, cowScene->rootNode);
+    
+    ufoScene = mgdl_LoadFBX("assets/Ufo.fbx");
     Scene_SetMaterialTexture(ufoScene, "Material", ufoTexture);
     Scene_AddChildNode(mainScene, mainScene->rootNode, ufoScene->rootNode);
 }
@@ -72,13 +82,15 @@ void SaucerGame::update() {
     ufoScene->rootNode->transform->position.z = cos(time * 12.f)*0.25 + 0.75;
     ufoScene->rootNode->transform->rotationDegrees.y = Rad2Deg(-tilt_forward);
     ufoScene->rootNode->transform->rotationDegrees.x = Rad2Deg(tilt_side);
+
+    //cowScene->rootNode->transform->position = V3f_Create(0,0,0);
 }
 
 void SaucerGame::draw() {
     Color4f *color_sky = Color_GetDefaultColor(Color_Red);
     mgdl_glClearColor4f(color_sky);
 
-    mgdl_InitPerspectiveProjection(90, 1., 128. );
+    mgdl_InitPerspectiveProjection(90, 0.1, 128. );
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -107,7 +119,6 @@ void SaucerGame::draw() {
     glLoadIdentity();
     Menu_SetActive(debugMenu);
     Menu_Start(0, mgdl_GetScreenHeight(), mgdl_GetScreenWidth());
-    Menu_Text("fdfsdffdfdfd");
     Menu_Text(debugstream.str().c_str());
 }
 
