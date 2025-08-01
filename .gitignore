@@ -53,3 +53,10 @@ build/
 
 # Blender backup files
 *.blend1
+
+# Compile database for Clang tooling
+# This is genereated by: bear -- make linux
+compile_commands.json
+
+# VSCode crap
+.cache/
