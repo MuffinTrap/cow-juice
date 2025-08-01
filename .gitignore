@@ -54,6 +54,9 @@ build/
 # Blender backup files
 *.blend1
 
+# Krita backup files
+*.png~
+
 # Compile database for Clang tooling
 # This is genereated by: bear -- make linux
 compile_commands.json
