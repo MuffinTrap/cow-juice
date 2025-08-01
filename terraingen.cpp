@@ -48,6 +48,13 @@ Mesh* CreateGridMesh ( float width, float depth, float uvRange, V3f forward, V3f
 		size_t positionIndex = 0;
 		const float uStep = uvRange/(float)(width);
 		const float vStep = uvRange/(float)(depth);
+
+		V3f up;
+		V3f_Cross(forward, right, up);
+
+		V3f position;
+		V3f F;
+		V3f R;
 		for (int d = 0; d < depth; d++)
 		{
 			for (int w = 0; w < width; w++)
@@ -57,16 +64,18 @@ Mesh* CreateGridMesh ( float width, float depth, float uvRange, V3f forward, V3f
 				size_t uvi = i * 2;
 				// DEBUG
 				float px = sx + w;
-				float py = 0.0f;
 				float pz = sz + d;
+				V3f_Scale(forward, px, F);
+				V3f_Scale(right, pz, R);
+				V3f_Add(F, R, position);
 
-				mesh->positions[vertexi + X] = px;
-				mesh->positions[vertexi + Y] = py;
-				mesh->positions[vertexi + Z] = pz;
+				mesh->positions[vertexi + X] = V3f_X(position);
+				mesh->positions[vertexi + Y] = V3f_Y(position);
+				mesh->positions[vertexi + Z] = V3f_Z(position);
 
-				mesh->normals[vertexi + X] = 0.0f;
-				mesh->normals[vertexi + Y] = 1.0f;
-				mesh->normals[vertexi + Z] = 0.0f;
+				mesh->normals[vertexi + X] = V3f_X(up);
+				mesh->normals[vertexi + Y] = V3f_Y(up);
+				mesh->normals[vertexi + Z] = V3f_Z(up);
 
 				mesh->uvs[uvi + X] = uStep * (float)w;
 				mesh->uvs[uvi + Y] = vStep * (float)d;
