@@ -71,7 +71,8 @@ void SaucerGame::init() {
         bushScenes[i]->rootNode->transform->scale.x = scale;
     }
 
-    iceCreamMeter = mgdl_LoadSprite("assets/IceCreamMeter.png", 64, 16);
+    iceCreamMeter = mgdl_LoadSprite("assets/IceCreamMeter.png", 280, 128);
+    iceCreamMeterBackground = mgdl_LoadSprite("assets/IceCreamMeterBackground.png", 280, 128);
     grassSprite = mgdl_LoadSprite("assets/Grass.png", 16, 16);
 
     for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
@@ -139,6 +140,14 @@ void SaucerGame::update() {
     V3f_Scale(cam_pos_diff, cam_chase_speed * timeDelta, cam_pos_delta);
     V3f_Add(mainCameraTransform.position, cam_pos_delta, mainCameraTransform.position);
     mainCameraTransform.rotationDegrees.y = -15.;
+
+    // UI
+    // TODO: Connect meter progress to cows
+    iceCreamMeterProgress += timeDelta;
+    if(iceCreamMeterProgress > 1.0f)
+    {
+        iceCreamMeterProgress -= 1.0f;
+    }
 }
 
 void SaucerGame::draw() {
@@ -200,10 +209,49 @@ void SaucerGame::draw() {
     // Draw UI
     mgdl_glSetAlphaTest(true);
     mgdl_glSetTransparency(true);
-    Sprite_Draw2D(iceCreamMeter, 0, 196, 406, 64, LJustify, RJustify, Color_GetDefaultColor(Color_White));
+    Sprite_Draw2D(iceCreamMeterBackground, 0, 200, 350, 100, LJustify, RJustify, Color_GetDefaultColor(Color_White));
+    Sprite_Draw2DClipped(iceCreamMeter, 0, 200, 350, 100, iceCreamMeterProgress, LJustify, RJustify, Color_GetDefaultColor(Color_White));
 }
 
 void SaucerGame::quit() {
 
     
+}
+
+void SaucerGame::Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor)
+{
+	V3f drawPos = Sprite_AdjustDrawingPosition(sprite, x, y, scale, alignX, alignY);
+	float width = sprite->_font->_aspect * scale * progress;
+	float height = scale;
+	const float uvW = sprite->_font->_uvWidth * progress;
+	const float uvH = sprite->_font->_uvHeight;
+
+	mgdl_glColor4f(tintColor);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, sprite->_font->_fontTexture->textureId);
+
+	glBegin(GL_QUADS);
+
+	vec2 tx = _Font_GetTextureCoordinate(sprite->_font, spriteIndex); //LOW LEFT!
+
+	// LOW LEFT!
+	glTexCoord2f(tx.x, tx.y);
+	glVertex2f(drawPos.x, drawPos.y - height);
+
+	// LOW RIGHT
+	glTexCoord2f(tx.x + uvW, tx.y);
+	glVertex2f(drawPos.x + width, drawPos.y - height);
+
+	// TOP RIGHT
+	glTexCoord2f(tx.x + uvW, tx.y + uvH);
+	glVertex2f(drawPos.x + width, drawPos.y);
+
+	// TOP LEFT
+	glTexCoord2f(tx.x, tx.y + uvH);
+	glVertex2f(drawPos.x, drawPos.y );
+
+	glEnd();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
 }

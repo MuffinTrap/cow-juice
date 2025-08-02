@@ -13,6 +13,9 @@ public:
     void update();
     void draw();
     void quit();
+    void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
+
+    float iceCreamMeterProgress = 0.0f;
     
     Scene *mainScene;
     Transform mainCameraTransform;
@@ -22,6 +25,7 @@ public:
     Scene *cowScene;
     Scene *terrainScene;
     Sprite* iceCreamMeter;
+    Sprite* iceCreamMeterBackground;
     Sprite* grassSprite;
 
     static const int TREE_MODEL_AMOUNT = 16;
