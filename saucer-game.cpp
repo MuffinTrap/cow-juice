@@ -49,10 +49,11 @@ void SaucerGame::init() {
         cows[i].behavior = CowState::BehaviorState::grace;
         cows[i].speed = V3f_Create(0, 0, 0);
         cows[i].stress = 0;
-        cows[i].node = cloneCowNode( cowScene->rootNode);
+        cows[i].node = cloneCowNode(cowScene->rootNode);
         cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * 32.0f - 16.f;
         cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * 32.0f - 16.f;
-
+        short counter = 0;
+        cows[i].parachute = Scene_FindChildNodeByIndex(cows[i].node, 7, &counter);
         Scene_AddChildNode(mainScene, mainScene->rootNode, cows[i].node);
     }
     
@@ -320,6 +321,8 @@ void SaucerGame::draw_gameloop()
         Sprite_Draw2D(cowBubbleSprite, 0, 50, 230, 130, LJustify, RJustify, Color_GetDefaultColor(Color_White));
         Sprite_Draw2D(cowFaceSprite, cowStressUiState, 67, 250, 100, LJustify, RJustify, Color_GetDefaultColor(Color_White));
     }
+
+    //Scene_DebugDraw(mainScene, debugMenu, 0, mgdl_GetScreenHeight(), 0);
 }
 
 void SaucerGame::quit() {
@@ -431,6 +434,19 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
                 cow.node->transform->position.z = ground_height;
                 cow.speed.z = 0;
             }
+        }
+
+        if (cow.behavior == CowState::BehaviorState::lifted)
+        {
+            cow.parachute->transform->scale.z = 1.0f;
+            cow.parachute->transform->scale.y = 1.0f;
+            cow.parachute->transform->scale.x = 1.0f;
+        }
+        else
+        {
+            cow.parachute->transform->scale.z = 0.0f;
+            cow.parachute->transform->scale.y = 0.0f;
+            cow.parachute->transform->scale.x = 0.0f;
         }
 
         debugstream << "stress: " << cows[i].stress;

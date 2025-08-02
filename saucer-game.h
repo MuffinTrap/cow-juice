@@ -59,6 +59,7 @@ public:
 
     struct CowState {
         Node *node;
+        Node *parachute;
         enum class BehaviorState { grace, panic, lifted } behavior;
         V3f speed;
         float stress;
