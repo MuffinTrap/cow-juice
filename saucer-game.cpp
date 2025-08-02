@@ -88,6 +88,8 @@ void SaucerGame::init() {
         bushScenes[i]->rootNode->transform->scale.x = scale;
     }
 
+    cowFaceSprite = mgdl_LoadSprite("assets/CowFace.png", 60, 64);
+    cowBubbleSprite = mgdl_LoadSprite("assets/CowBubble.png", 80, 80);
     iceCreamMeter = mgdl_LoadSprite("assets/IceCreamMeter.png", 280, 128);
     iceCreamMeterBackground = mgdl_LoadSprite("assets/IceCreamMeterBackground.png", 280, 128);
     grassSprite = mgdl_LoadSprite("assets/Grass.png", 16, 16);
@@ -163,10 +165,16 @@ void SaucerGame::update() {
 
     // UI
     // TODO: Connect meter progress to cows
+    // TODO: Connect cow stress UI state to the beamed cow
     iceCreamMeterProgress += timeDelta;
     if(iceCreamMeterProgress > 1.0f)
     {
         iceCreamMeterProgress -= 1.0f;
+        cowStressUiState++;
+        if(cowStressUiState >= COW_STRESS_FRAME_COUNT)
+        {
+            cowStressUiState = -1;
+        }
     }
 }
 
@@ -231,6 +239,16 @@ void SaucerGame::draw() {
     mgdl_glSetTransparency(true);
     Sprite_Draw2D(iceCreamMeterBackground, 0, 200, 350, 100, LJustify, RJustify, Color_GetDefaultColor(Color_White));
     Sprite_Draw2DClipped(iceCreamMeter, 0, 200, 350, 100, iceCreamMeterProgress, LJustify, RJustify, Color_GetDefaultColor(Color_White));
+
+    if(cowStressUiState >= 0)
+    {
+        if(cowStressUiState >= COW_STRESS_FRAME_COUNT)
+        {
+            cowStressUiState = COW_STRESS_FRAME_COUNT - 1;
+        }
+        Sprite_Draw2D(cowBubbleSprite, 0, 60-8, 250-8, 116, LJustify, RJustify, Color_GetDefaultColor(Color_White));
+        Sprite_Draw2D(cowFaceSprite, cowStressUiState, 60, 250, 100, LJustify, RJustify, Color_GetDefaultColor(Color_White));
+    }
 }
 
 void SaucerGame::quit() {

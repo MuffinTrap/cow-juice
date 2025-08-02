@@ -27,9 +27,12 @@ public:
     void updateCowBeaming(float time, float timeDelta, bool button_beam_pressed);
     
     float iceCreamMeterProgress = 0.0f;
+    static const int COW_STRESS_NONE = -1;
+    static const int COW_STRESS_FRAME_COUNT = 7;
+    int cowStressUiState = COW_STRESS_NONE; // COW_STRESS_NONE Nothing in UI, 0 - COW_STRESS_FRAME_COUNT shows UI
 
     GameState currentState = StartScreen;
-    
+
     Scene *mainScene;
     Transform mainCameraTransform;
     
@@ -40,12 +43,13 @@ public:
     Sprite* iceCreamMeter;
     Sprite* iceCreamMeterBackground;
     Sprite* grassSprite;
+    Sprite* cowBubbleSprite;
+    Sprite* cowFaceSprite;
 
     static const int TREE_MODEL_AMOUNT = 16;
     static const int BUSH_MODEL_AMOUNT = 16;
     Scene *treeScenes[TREE_MODEL_AMOUNT];
     Scene *bushScenes[BUSH_MODEL_AMOUNT];
-
 
     Menu *debugMenu;
 
