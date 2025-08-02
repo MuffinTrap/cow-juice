@@ -289,8 +289,8 @@ void SaucerGame::draw_gameloop()
         {
             cowStressUiState = COW_STRESS_FRAME_COUNT - 1;
         }
-        Sprite_Draw2D(cowBubbleSprite, 0, 60-8, 250-8, 116, LJustify, RJustify, Color_GetDefaultColor(Color_White));
-        Sprite_Draw2D(cowFaceSprite, cowStressUiState, 60, 250, 100, LJustify, RJustify, Color_GetDefaultColor(Color_White));
+        Sprite_Draw2D(cowBubbleSprite, 0, 50, 230, 130, LJustify, RJustify, Color_GetDefaultColor(Color_White));
+        Sprite_Draw2D(cowFaceSprite, cowStressUiState, 67, 250, 100, LJustify, RJustify, Color_GetDefaultColor(Color_White));
     }
 }
 
