@@ -24,6 +24,9 @@ public:
     Sprite* iceCreamMeter;
     Sprite* grassSprite;
 
+    static const int TREE_MODEL_AMOUNT = 16;
+    Scene *treeScenes[TREE_MODEL_AMOUNT];
+
     Menu *debugMenu;
 
     struct AnimatedWorldSprite

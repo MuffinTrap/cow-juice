@@ -37,6 +37,23 @@ void SaucerGame::init() {
     Scene_SetMaterialTexture(ufoScene, "Material", ufoTexture);
     Scene_AddChildNode(mainScene, mainScene->rootNode, ufoScene->rootNode);
 
+    for(int i = 0; i < TREE_MODEL_AMOUNT; ++i)
+    {
+        treeScenes[i] = mgdl_LoadFBX("assets/Tree.fbx");
+        Scene_SetMaterialTexture(treeScenes[i], "Material", ufoTexture);
+        Scene_AddChildNode(mainScene, mainScene->rootNode, treeScenes[i]->rootNode);
+        treeScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
+        treeScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
+        treeScenes[i]->rootNode->transform->position.z = 0.0f;
+        treeScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
+        treeScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
+        treeScenes[i]->rootNode->transform->rotationDegrees.x = 0.0f;
+        float scale = 0.75f + (float)rand()/(float)(RAND_MAX/0.3f);
+        treeScenes[i]->rootNode->transform->scale.z = scale;
+        treeScenes[i]->rootNode->transform->scale.y = scale;
+        treeScenes[i]->rootNode->transform->scale.x = scale;
+    }
+
     iceCreamMeter = mgdl_LoadSprite("assets/IceCreamMeter.png", 64, 16);
     grassSprite = mgdl_LoadSprite("assets/Grass.png", 16, 16);
 
