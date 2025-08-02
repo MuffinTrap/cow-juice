@@ -3,7 +3,7 @@
 
 static Menu* mainmenu;
 
-void Start_Load()
+void Start_Init()
 {
     Font* df = DefaultFont_GetDefaultFont();
     mainmenu = Menu_Create(df, 32, 1.2f);

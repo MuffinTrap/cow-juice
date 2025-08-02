@@ -1,4 +1,4 @@
 #pragma once
 
-void Start_Load(void);
+void Start_Init(void);
 bool Start_Run(void);

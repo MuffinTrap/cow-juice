@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>Cow Juice</name>
+  <coder>Team Cow</coder>
+  <version>1.0</version>
+  <release_date>20250803</release_date>
+  <short_description>Get Cows</short_description>
+  <long_description>Contacting humans is forbidden, but the ice cream made from cow juice fetches a sweet price on the galactic black market.
+   </long_description>
+</app>

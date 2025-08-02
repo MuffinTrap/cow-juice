@@ -21,6 +21,8 @@ public:
     void init();
     void update();
     void draw();
+    void update_gameloop();
+    void draw_gameloop();
     void quit();
 
     void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);

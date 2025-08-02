@@ -16,9 +16,12 @@
 #include <cmath>
 #include <cstddef>
 
+#include "start-screen.h"
+#include "end-screen.h"
+
 #define UNUSED(x) (void)(x)
 
-const float pi = 3.141;
+const float pi = M_PI;
 
 static Node *cloneCowNode(const Node *node) {
     Node *n = Node_Create(1);
@@ -106,9 +109,28 @@ void SaucerGame::init() {
         grassSprites[i].scale = 0.33f;
         grassSprites[i].frame = rand() % GRASS_SPRITE_FRAME_COUNT;
     }
+
+    Start_Init();
+    End_Init();
 }
 
-void SaucerGame::update() {
+void SaucerGame::update()
+{
+    switch(currentState)
+    {
+        case StartScreen:
+
+            break;
+        case CowHunt:
+            update_gameloop();
+            break;
+        case EndScreen:
+
+            break;
+    }
+}
+
+void SaucerGame::update_gameloop() {
     debugstream.str(std::string());
 
     float time = mgdl_GetElapsedSeconds();
@@ -179,6 +201,22 @@ void SaucerGame::update() {
 }
 
 void SaucerGame::draw() {
+    switch(currentState)
+    {
+        case StartScreen:
+            Start_Run();
+            break;
+        case CowHunt:
+            draw_gameloop();
+            break;
+        case EndScreen:
+            End_Run();
+            break;
+    }
+}
+
+void SaucerGame::draw_gameloop()
+{
     Color4f *color_sky = Color_GetDefaultColor(Color_Red);
     mgdl_glClearColor4f(color_sky);
 
