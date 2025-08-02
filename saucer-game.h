@@ -27,7 +27,7 @@ public:
 
     void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
     void updateCowBeaming(float time, float timeDelta, bool button_beam_pressed);
-    void addMilkTick(float timeDelta);
+    void addMilkTick(float timeDelta, float stress);
     
     float iceCreamMeterProgress = 0.0f;
     static const int COW_STRESS_NONE = -1;
@@ -60,6 +60,7 @@ public:
         Node *node;
         enum class BehaviorState { grace, panic, lifted } behavior;
         V3f speed;
+        float stress;
     };
     std::array<CowState, 16> cows;
 

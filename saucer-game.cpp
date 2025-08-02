@@ -48,9 +48,10 @@ void SaucerGame::init() {
     for (size_t i = 0; i < cows.size(); ++i) {
         cows[i].behavior = CowState::BehaviorState::grace;
         cows[i].speed = V3f_Create(0, 0, 0);
+        cows[i].stress = 0;
         cows[i].node = cloneCowNode( cowScene->rootNode);
-        cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * 64.0f - 32.f;
-        cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * 64.0f - 32.f;
+        cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * 32.0f - 16.f;
+        cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * 32.0f - 16.f;
 
         Scene_AddChildNode(mainScene, mainScene->rootNode, cows[i].node);
     }
@@ -195,7 +196,7 @@ void SaucerGame::update_gameloop() {
         move_delta,
         ufoScene->rootNode->transform->position
     );
-    ufoScene->rootNode->transform->position.z = cos(time * 12.f)*0.25 + 1.25;
+    ufoScene->rootNode->transform->position.z = cos(time * 12.f) * 0.25 + 1.8;
     ufoScene->rootNode->transform->rotationDegrees.y = Rad2Deg(-tilt_forward);
     ufoScene->rootNode->transform->rotationDegrees.x = Rad2Deg(tilt_side);
 
@@ -221,12 +222,6 @@ void SaucerGame::update_gameloop() {
     } else {
         //iceCreamMeterProgress -= timeDelta * 0.01; // Melt ice cream
         iceCreamMeterProgress = std::max(0.f, iceCreamMeterProgress);
-
-        cowStressUiState++;
-        if(cowStressUiState >= COW_STRESS_FRAME_COUNT)
-        {
-            //cowStressUiState = -1;
-        }
     }
 }
 
@@ -372,6 +367,8 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
         debugstream << "Not beaming." << std::endl;
     }
 
+    float stress_max = 0;
+
     for (size_t i = 0; i < cows.size(); ++i) {
         CowState &cow = cows[i];
         debugstream << "Cow #" << i << ":" << std::endl;
@@ -387,10 +384,15 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
         cow_saucer_diff_plane.z = 0;
         float distance_plane = V3f_Length(cow_saucer_diff_plane);
 
+        // Stress
+        float stressfulness = std::exp(-distance * 0.4);
+        cows[i].stress = std::max(0.f, std::min(cows[i].stress - timeDelta * 0.2f + stressfulness * 0.4f * timeDelta, 1.f));
+        stress_max = std::max(stress_max, cows[i].stress);
+
         if (beaming) {
             if (distance < 0.2f) {
                 debugstream << "MILKING!" << std::endl;
-                addMilkTick(timeDelta);
+                addMilkTick(timeDelta, cow.stress);
             }
 
             if (distance_plane < 0.5f) {
@@ -418,11 +420,14 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
             }
         }
 
+        debugstream << "stress: " << cows[i].stress;
         debugstream << std::endl;
     }
+
+    cowStressUiState = (int)(stress_max * (float)COW_STRESS_FRAME_COUNT - 1);
 }
 
-void SaucerGame::addMilkTick(float timeDelta) {
-    iceCreamMeterProgress += timeDelta * 0.1f;
+void SaucerGame::addMilkTick(float timeDelta, float stress) {
+    iceCreamMeterProgress += timeDelta * 0.1f * (1. - stress * 1.25);
     iceCreamMeterProgress = std::max(0.f, std::min(iceCreamMeterProgress, 1.0f));
 }
