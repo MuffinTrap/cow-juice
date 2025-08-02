@@ -134,6 +134,8 @@ void SaucerGame::init() {
 
     Start_Init();
     End_Init();
+
+    currentState = StartScreen;
 }
 
 void SaucerGame::update()
@@ -159,6 +161,7 @@ void SaucerGame::update_gameloop() {
     float timeDelta = mgdl_GetDeltaTime();
 
     debugstream << "UPDATE\ntime: " << time << "\n  delta: " << timeDelta << std::endl;
+    debugstream << "Press + to win" << std::endl;
    
     //////// INPUT ///////////
 
@@ -167,6 +170,13 @@ void SaucerGame::update_gameloop() {
     float pitch = WiiController_GetPitch(controller);
     //float yaw = WiiController_GetYaw(controller);
     bool button_beam_pressed = WiiController_ButtonHeld(controller, WiiButtons::ButtonA);
+
+    // DANGER DEBUG
+    if (WiiController_ButtonPress(controller, ButtonPlus))
+    {
+        End_CalculateScore(1, 1);
+        currentState = EndScreen;
+    }
     
     if(button_beam_pressed && isBeamSoundPaused)
     {
@@ -223,9 +233,10 @@ void SaucerGame::update_gameloop() {
     if (iceCreamMeterProgress >= 1.0f)
     {
         // YOU WIN!
-    }
-    else
-    {
+        End_CalculateScore(iceCreamMeterProgress, time);
+        currentState = EndScreen;
+
+    } else {
         //iceCreamMeterProgress -= timeDelta * 0.01; // Melt ice cream
         iceCreamMeterProgress = std::max(0.f, iceCreamMeterProgress);
     }
@@ -238,7 +249,13 @@ void SaucerGame::draw() {
     switch(currentState)
     {
         case StartScreen:
-            Start_Run();
+        {
+            bool startGame = Start_Run();
+            if (startGame)
+            {
+                currentState = CowHunt;
+            }
+        }
             break;
         case CowHunt:
             draw_gameloop();
