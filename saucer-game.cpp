@@ -237,16 +237,17 @@ void SaucerGame::update_gameloop() {
     V3f_Add(mainCameraTransform.position, cam_pos_delta, mainCameraTransform.position);
     mainCameraTransform.rotationDegrees.y = -15.;
 
-    // UI
     if (iceCreamMeterProgress >= 1.0f)
     {
         // YOU WIN!
         End_CalculateScore(iceCreamMeterProgress, time);
         currentState = EndScreen;
 
-    } else {
-        //iceCreamMeterProgress -= timeDelta * 0.01; // Melt ice cream
-        iceCreamMeterProgress = std::max(0.f, iceCreamMeterProgress);
+    }
+    
+    if (button_beam_pressed) {
+        // Melt ice cream
+        iceCreamMeterProgress = std::max(0.f, iceCreamMeterProgress - timeDelta * 0.0025f);
     }
 
     // AUDIO
