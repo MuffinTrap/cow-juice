@@ -54,6 +54,23 @@ void SaucerGame::init() {
         treeScenes[i]->rootNode->transform->scale.x = scale;
     }
 
+    for(int i = 0; i < BUSH_MODEL_AMOUNT; ++i)
+    {
+        bushScenes[i] = mgdl_LoadFBX("assets/Bush.fbx");
+        Scene_SetMaterialTexture(bushScenes[i], "Material", ufoTexture);
+        Scene_AddChildNode(mainScene, mainScene->rootNode, bushScenes[i]->rootNode);
+        bushScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
+        bushScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
+        bushScenes[i]->rootNode->transform->position.z = 0.0f;
+        bushScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
+        bushScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
+        bushScenes[i]->rootNode->transform->rotationDegrees.x = 0.0f;
+        float scale = 0.75f + (float)rand()/(float)(RAND_MAX/0.3f);
+        bushScenes[i]->rootNode->transform->scale.z = scale;
+        bushScenes[i]->rootNode->transform->scale.y = scale;
+        bushScenes[i]->rootNode->transform->scale.x = scale;
+    }
+
     iceCreamMeter = mgdl_LoadSprite("assets/IceCreamMeter.png", 64, 16);
     grassSprite = mgdl_LoadSprite("assets/Grass.png", 16, 16);
 

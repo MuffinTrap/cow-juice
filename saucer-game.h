@@ -25,7 +25,10 @@ public:
     Sprite* grassSprite;
 
     static const int TREE_MODEL_AMOUNT = 16;
+    static const int BUSH_MODEL_AMOUNT = 16;
     Scene *treeScenes[TREE_MODEL_AMOUNT];
+    Scene *bushScenes[BUSH_MODEL_AMOUNT];
+
 
     Menu *debugMenu;
 
