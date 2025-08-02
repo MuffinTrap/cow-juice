@@ -26,5 +26,17 @@ public:
 
     Menu *debugMenu;
 
+    struct AnimatedWorldSprite
+    {
+        Sprite* sprite;
+        V3f position;
+        V3f euler;
+        float scale;
+        int frame;
+    };
+    static const int GRASS_SPRITE_AMOUNT = 128;
+    static const int GRASS_SPRITE_FRAME_COUNT = 4;
+    AnimatedWorldSprite grassSprites[GRASS_SPRITE_AMOUNT];
+
     std::stringstream debugstream;
 };
