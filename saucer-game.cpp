@@ -202,6 +202,8 @@ void SaucerGame::update_gameloop() {
 
     updateCowBeaming(time, timeDelta, button_beam_pressed);
 
+    Scene_FindChildNode(ufoScene->rootNode, "Disc")->transform->rotationDegrees.z += 150.0f * V3f_Length(move_delta);
+
     // Camera
     V3f cam_pos_target;
     V3f_Add(ufoScene->rootNode->transform->position, V3f_Create(-3., 0., 2.), cam_pos_target);
