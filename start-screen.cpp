@@ -13,6 +13,10 @@ void Start_Init()
 
 bool Start_Run()
 {
+
+    Color4f *color_sky = Color_GetDefaultColor(Color_Blue);
+    mgdl_glClearColor4f(color_sky);
+
     mgdl_InitOrthoProjection();
     Menu_SetActive(mainmenu);
     Menu_Start(mgdl_GetScreenWidth(), mgdl_GetScreenHeight()/2, mgdl_GetScreenWidth()/3);

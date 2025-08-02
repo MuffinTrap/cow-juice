@@ -78,7 +78,7 @@ public:
     };
     static const int GRASS_SPRITE_AMOUNT = 128;
     static const int GRASS_SPRITE_FRAME_COUNT = 4;
-    AnimatedWorldSprite grassSprites[GRASS_SPRITE_AMOUNT];
+    AnimatedWorldSprite* grassSprites;
 
     Sound* sfxCommonMoos[6];
     Sound* sfxMeltMoos[3];

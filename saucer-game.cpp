@@ -100,6 +100,7 @@ void SaucerGame::init() {
     iceCreamMeterBackground = mgdl_LoadSprite("assets/IceCreamMeterBackground.png", 280, 128);
     grassSprite = mgdl_LoadSprite("assets/Grass.png", 16, 16);
 
+    grassSprites = (AnimatedWorldSprite*)malloc(sizeof(AnimatedWorldSprite) * GRASS_SPRITE_AMOUNT);
     for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
     {
         grassSprites[i].sprite = grassSprite;

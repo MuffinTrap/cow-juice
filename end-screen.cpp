@@ -43,6 +43,8 @@ void End_CalculateScore(float iceCreamAmount, float time)
 
 bool End_Run()
 {
+    Color4f *color_sky = Color_GetDefaultColor(Color_Blue);
+    mgdl_glClearColor4f(color_sky);
     mgdl_InitOrthoProjection();
     Menu_SetActive(endmenu);
     Menu_Start(32, mgdl_GetScreenHeight()-32, mgdl_GetScreenWidth()/2);
