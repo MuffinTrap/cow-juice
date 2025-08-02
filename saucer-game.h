@@ -27,13 +27,14 @@ public:
 
     void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
     void updateCowBeaming(float time, float timeDelta, bool button_beam_pressed);
+    void addMilkTick(float timeDelta);
     
     float iceCreamMeterProgress = 0.0f;
     static const int COW_STRESS_NONE = -1;
     static const int COW_STRESS_FRAME_COUNT = 7;
     int cowStressUiState = COW_STRESS_NONE; // COW_STRESS_NONE Nothing in UI, 0 - COW_STRESS_FRAME_COUNT shows UI
 
-    GameState currentState = StartScreen;
+    GameState currentState = CowHunt;
 
     Scene *mainScene;
     Transform mainCameraTransform;
@@ -57,6 +58,8 @@ public:
 
     struct CowState {
         Node *node;
+        enum class BehaviorState { grace, panic, lifted } behavior;
+        V3f speed;
     };
     std::array<CowState, 16> cows;
 

@@ -21,7 +21,7 @@
 
 #define UNUSED(x) (void)(x)
 
-const float pi = M_PI;
+const float gravity = -1.8;
 
 static Node *cloneCowNode(const Node *node) {
     Node *n = Node_Create(1);
@@ -46,6 +46,8 @@ void SaucerGame::init() {
     cowScene = mgdl_LoadFBX("assets/Cow.fbx");
     Scene_SetMaterialTexture(cowScene, "Material", ufoTexture);
     for (size_t i = 0; i < cows.size(); ++i) {
+        cows[i].behavior = CowState::BehaviorState::grace;
+        cows[i].speed = V3f_Create(0, 0, 0);
         cows[i].node = cloneCowNode( cowScene->rootNode);
         cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * 64.0f - 32.f;
         cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * 64.0f - 32.f;
@@ -186,16 +188,19 @@ void SaucerGame::update_gameloop() {
     mainCameraTransform.rotationDegrees.y = -15.;
 
     // UI
-    // TODO: Connect meter progress to cows
-    // TODO: Connect cow stress UI state to the beamed cow
-    iceCreamMeterProgress += timeDelta;
-    if(iceCreamMeterProgress > 1.0f)
+
+    if (iceCreamMeterProgress >= 1.0f)
     {
-        iceCreamMeterProgress -= 1.0f;
+        // YOU WIN!
+
+    } else {
+        //iceCreamMeterProgress -= timeDelta * 0.01; // Melt ice cream
+        iceCreamMeterProgress = std::max(0.f, iceCreamMeterProgress);
+
         cowStressUiState++;
         if(cowStressUiState >= COW_STRESS_FRAME_COUNT)
         {
-            cowStressUiState = -1;
+            //cowStressUiState = -1;
         }
     }
 }
@@ -217,7 +222,7 @@ void SaucerGame::draw() {
 
 void SaucerGame::draw_gameloop()
 {
-    Color4f *color_sky = Color_GetDefaultColor(Color_Red);
+    Color4f *color_sky = Color_GetDefaultColor(Color_Blue);
     mgdl_glClearColor4f(color_sky);
 
     mgdl_InitPerspectiveProjection(90, 0.1, 128. );
@@ -358,18 +363,41 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
         float distance_plane = V3f_Length(cow_saucer_diff_plane);
 
         if (beaming) {
-            if (distance < 0.1f) {
+            if (distance < 0.2f) {
                 debugstream << "MILKING!" << std::endl;
+                addMilkTick(timeDelta);
+            }
 
-            } else if (distance_plane < 0.5f) {
+            if (distance_plane < 0.5f) {
                 debugstream << "LIFTING!" << std::endl;
+                cow.behavior = CowState::BehaviorState::lifted;
 
                 V3f cow_pos_delta;
                 V3f_Scale(cow_to_saucer_dir, timeDelta, cow_pos_delta);
                 V3f_Add(cow.node->transform->position, cow_pos_delta, cow.node->transform->position);
             }
+        } else if (cow.behavior == CowState::BehaviorState::lifted) {
+            // fall down
+            cow.speed.z += gravity * 1.4f * timeDelta;
+
+            float ground_height = 0.f; // TODO get from terrain
+            V3f cow_pos_delta;
+            V3f_Scale(cow.speed, timeDelta, cow_pos_delta);
+            V3f_Add(cow.node->transform->position, cow_pos_delta, cow.node->transform->position);
+
+            if (cow.node->transform->position.z < ground_height) {
+                // touch ground
+                cow.behavior = CowState::BehaviorState::grace;
+                cow.node->transform->position.z = ground_height;
+                cow.speed.z = 0;
+            }
         }
 
         debugstream << std::endl;
     }
+}
+
+void SaucerGame::addMilkTick(float timeDelta) {
+    iceCreamMeterProgress += timeDelta * 0.1f;
+    iceCreamMeterProgress = std::max(0.f, std::min(iceCreamMeterProgress, 1.0f));
 }
