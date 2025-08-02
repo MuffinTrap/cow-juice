@@ -34,6 +34,20 @@ bool Start_Run()
     Menu_Start(32, mgdl_GetScreenHeight()/2-20, mgdl_GetScreenWidth()/3);
     Menu_Text("Press A to start");
 
+    float r = mgdl_GetElapsedSeconds();
+    float ss = r + cos(r/2.0f) * 10.0f;
+    float h = mgdl_GetScreenHeight()/4.0f;
+    glBegin(GL_LINES);
+    mgdl_glColor4f(Color_GetDefaultColor(Color_White));
+
+    for(int i = 0; i < mgdl_GetScreenWidth(); i++)
+    {
+        glVertex2f(i, 0.0f);
+        glVertex2f(i, h + sin(ss + i * 0.025f) * (h/3.0f)*sin(r+i*0.01f)*1.0f);
+    }
+
+    glEnd();
+
     if (WiiController_ButtonPress(mgdl_GetController(0), ButtonA))
     {
         return true;
