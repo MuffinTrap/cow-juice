@@ -9,6 +9,7 @@
 #include "mgdl/mgdl-scene.h"
 #include "mgdl/mgdl-types.h"
 #include "mgdl/mgdl-util.h"
+#include "mgdl/mgdl-vector.h"
 #include "mgdl/mgdl-vectorfunctions.h"
 #include <GL/gl.h>
 #include <algorithm>
@@ -84,11 +85,6 @@ void SaucerGame::update() {
 
     //////// SCENE ///////////
 
-    // Camera
-    mainCameraTransform.position.x = -3.;
-    mainCameraTransform.position.z = 2.;
-    mainCameraTransform.rotationDegrees.y = -15.;
-
     // UFO
     V3f_Add(
         ufoScene->rootNode->transform->position,
@@ -99,7 +95,16 @@ void SaucerGame::update() {
     ufoScene->rootNode->transform->rotationDegrees.y = Rad2Deg(-tilt_forward);
     ufoScene->rootNode->transform->rotationDegrees.x = Rad2Deg(tilt_side);
 
-    //cowScene->rootNode->transform->position = V3f_Create(0,0,0);
+    // Camera
+    V3f cam_pos_target;
+    V3f_Add(ufoScene->rootNode->transform->position, V3f_Create(-3., 0., 2.), cam_pos_target);
+    V3f cam_pos_diff;
+    V3f_Sub(cam_pos_target, mainCameraTransform.position, cam_pos_diff);
+    V3f cam_pos_delta;
+    const float cam_chase_speed = 1.8;
+    V3f_Scale(cam_pos_diff, cam_chase_speed * timeDelta, cam_pos_delta);
+    V3f_Add(mainCameraTransform.position, cam_pos_delta, mainCameraTransform.position);
+    mainCameraTransform.rotationDegrees.y = -15.;
 }
 
 void SaucerGame::draw() {
@@ -110,11 +115,10 @@ void SaucerGame::draw() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    mgdl_InitCamera(
-        mainCameraTransform.position,
-        V3f_Create(0., 0., 0.),
-        V3f_Create(0., 0., 1.)
-    );
+    V3f cam_lookat;
+    float cam_angle = Deg2Rad(mainCameraTransform.rotationDegrees.y);
+    V3f_Add(mainCameraTransform.position, V3f_Create(cos(cam_angle), 0., sin(cam_angle)), cam_lookat);
+    mgdl_InitCamera(mainCameraTransform.position, cam_lookat, V3f_Create(0., 0., 1.));
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
