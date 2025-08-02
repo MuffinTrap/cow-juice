@@ -3,6 +3,8 @@
 #include "mgdl/mgdl-gui.h"
 #include "mgdl/mgdl-texture.h"
 #include "mgdl/mgdl-transform.h"
+#include "mgdl/mgdl-vector.h"
+#include <array>
 #include <mgdl.h>
 #include <sstream>
 
@@ -20,8 +22,10 @@ public:
     void update();
     void draw();
     void quit();
-    void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
 
+    void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
+    void updateCowBeaming(float time, float timeDelta, bool button_beam_pressed);
+    
     float iceCreamMeterProgress = 0.0f;
 
     GameState currentState = StartScreen;
@@ -44,6 +48,15 @@ public:
 
 
     Menu *debugMenu;
+
+    struct CowState {
+        Node *node;
+    };
+    std::array<CowState, 16> cows;
+
+    struct BeamingState {
+        float power = 0;
+    } beamingState;
 
     struct AnimatedWorldSprite
     {

@@ -14,9 +14,20 @@
 #include <GL/gl.h>
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
+#include <cstddef>
+
+#define UNUSED(x) (void)(x)
 
 const float pi = 3.141;
+
+static Node *cloneCowNode(const Node *node) {
+    Node *n = Node_Create(1);
+    n->children = node->children;
+    n->light = node->light;
+    n->material = node->material;
+    n->mesh = node->mesh;
+    return n;
+}
 
 void SaucerGame::init() {
     debugMenu = Menu_CreateDefault();
@@ -31,7 +42,13 @@ void SaucerGame::init() {
     
     cowScene = mgdl_LoadFBX("assets/Cow.fbx");
     Scene_SetMaterialTexture(cowScene, "Material", ufoTexture);
-    Scene_AddChildNode(mainScene, mainScene->rootNode, cowScene->rootNode);
+    for (size_t i = 0; i < cows.size(); ++i) {
+        cows[i].node = cloneCowNode( cowScene->rootNode);
+        cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * 64.0f - 32.f;
+        cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * 64.0f - 32.f;
+
+        Scene_AddChildNode(mainScene, mainScene->rootNode, cows[i].node);
+    }
     
     ufoScene = mgdl_LoadFBX("assets/Ufo.fbx");
     Scene_SetMaterialTexture(ufoScene, "Material", ufoTexture);
@@ -95,7 +112,7 @@ void SaucerGame::update() {
     float time = mgdl_GetElapsedSeconds();
     float timeDelta = mgdl_GetDeltaTime();
 
-    debugstream << "UPDATE\ntime: " << time << "\n  delta: " << timeDelta;
+    debugstream << "UPDATE\ntime: " << time << "\n  delta: " << timeDelta << std::endl;
    
     //////// INPUT ///////////
 
@@ -103,6 +120,7 @@ void SaucerGame::update() {
     float roll = WiiController_GetRoll(controller);
     float pitch = WiiController_GetPitch(controller);
     //float yaw = WiiController_GetYaw(controller);
+    bool button_beam_pressed = WiiController_ButtonHeld(controller, WiiButtons::ButtonA);
 
 
     ///////////////////////
@@ -126,9 +144,11 @@ void SaucerGame::update() {
         move_delta,
         ufoScene->rootNode->transform->position
     );
-    ufoScene->rootNode->transform->position.z = cos(time * 12.f)*0.25 + 0.75;
+    ufoScene->rootNode->transform->position.z = cos(time * 12.f)*0.25 + 1.25;
     ufoScene->rootNode->transform->rotationDegrees.y = Rad2Deg(-tilt_forward);
     ufoScene->rootNode->transform->rotationDegrees.x = Rad2Deg(tilt_side);
+
+    updateCowBeaming(time, timeDelta, button_beam_pressed);
 
     // Camera
     V3f cam_pos_target;
@@ -254,4 +274,46 @@ void SaucerGame::Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, 
 	glEnd();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
+
+}
+
+void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
+    UNUSED(time);
+
+    if (beaming) {
+        debugstream << "BEAMING!" << std::endl;
+    } else {
+        debugstream << "Not beaming." << std::endl;
+    }
+
+    for (size_t i = 0; i < cows.size(); ++i) {
+        CowState &cow = cows[i];
+        debugstream << "Cow #" << i << ":" << std::endl;
+
+        V3f cow_saucer_diff;
+        V3f_Sub(ufoScene->rootNode->transform->position, cow.node->transform->position, cow_saucer_diff);
+        float distance = V3f_Length(cow_saucer_diff);
+        UNUSED(distance);
+        V3f cow_to_saucer_dir;
+        V3f_Normalize(cow_saucer_diff, cow_to_saucer_dir);
+        
+        V3f cow_saucer_diff_plane = cow_saucer_diff;
+        cow_saucer_diff_plane.z = 0;
+        float distance_plane = V3f_Length(cow_saucer_diff_plane);
+
+        if (beaming) {
+            if (distance < 0.1f) {
+                debugstream << "MILKING!" << std::endl;
+
+            } else if (distance_plane < 0.5f) {
+                debugstream << "LIFTING!" << std::endl;
+
+                V3f cow_pos_delta;
+                V3f_Scale(cow_to_saucer_dir, timeDelta, cow_pos_delta);
+                V3f_Add(cow.node->transform->position, cow_pos_delta, cow.node->transform->position);
+            }
+        }
+
+        debugstream << std::endl;
+    }
 }
