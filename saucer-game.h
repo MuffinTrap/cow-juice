@@ -6,6 +6,13 @@
 #include <mgdl.h>
 #include <sstream>
 
+enum GameState
+{
+    StartScreen,
+    CowHunt,
+    EndScreen
+};
+
 class SaucerGame {
 public:
     SaucerGame() = default;
@@ -16,6 +23,8 @@ public:
     void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
 
     float iceCreamMeterProgress = 0.0f;
+
+    GameState currentState = StartScreen;
     
     Scene *mainScene;
     Transform mainCameraTransform;
