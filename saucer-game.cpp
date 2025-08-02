@@ -112,6 +112,21 @@ void SaucerGame::init() {
         grassSprites[i].frame = rand() % GRASS_SPRITE_FRAME_COUNT;
     }
 
+    sfxCommonMoos[0] = mgdl_LoadSound("assets/sfx/deepmoo01.wav");
+    sfxCommonMoos[1] = mgdl_LoadSound("assets/sfx/deepmoo04.wav");
+    sfxCommonMoos[2] = mgdl_LoadSound("assets/sfx/deepmoo06.wav");
+    sfxCommonMoos[3] = mgdl_LoadSound("assets/sfx/deepmoo09.wav");
+    sfxCommonMoos[4] = mgdl_LoadSound("assets/sfx/semimoo08.wav");
+    sfxCommonMoos[5] = mgdl_LoadSound("assets/sfx/semimoo09.wav");
+    sfxMeltMoos[0] = mgdl_LoadSound("assets/sfx/supermeltmoo05.wav");
+    sfxMeltMoos[1] = mgdl_LoadSound("assets/sfx/wahmeltmoo10.wav");
+    sfxMeltMoos[2] = mgdl_LoadSound("assets/sfx/wahmeltmoo11.wav");
+    sfxBeam = mgdl_LoadSound("assets/sfx/wavloop_beam.wav");
+    Sound_SetLooping(sfxBeam, true);
+
+    music = mgdl_LoadOgg("assets/blossom_mountain_140bpm.ogg");
+    Music_Play(music, true);
+
     Start_Init();
     End_Init();
 }
@@ -147,7 +162,17 @@ void SaucerGame::update_gameloop() {
     float pitch = WiiController_GetPitch(controller);
     //float yaw = WiiController_GetYaw(controller);
     bool button_beam_pressed = WiiController_ButtonHeld(controller, WiiButtons::ButtonA);
-
+    
+    if(button_beam_pressed && isBeamSoundPaused)
+    {
+        isBeamSoundPaused = false;
+        Sound_Play(sfxBeam);
+    }
+    else if(!button_beam_pressed && !isBeamSoundPaused)
+    {
+        isBeamSoundPaused = true;
+        Sound_Stop(sfxBeam);
+    }
 
     ///////////////////////
     const float tilt_normal_max = 0.5f;
