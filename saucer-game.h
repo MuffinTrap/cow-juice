@@ -28,7 +28,8 @@ public:
     void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
     void updateCowBeaming(float time, float timeDelta, bool button_beam_pressed);
     void addMilkTick(float timeDelta, float stress);
-    
+    void PlayMooSfx(bool melted);
+
     float iceCreamMeterProgress = 0.0f;
     static const int COW_STRESS_NONE = -1;
     static const int COW_STRESS_FRAME_COUNT = 7;
@@ -85,6 +86,7 @@ public:
     Sound* sfxBeam;
     Music* music;
     bool isBeamSoundPaused = false;
+    float mooSfxTimer;
 
     std::stringstream debugstream;
 };

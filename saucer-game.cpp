@@ -129,6 +129,8 @@ void SaucerGame::init() {
     music = mgdl_LoadOgg("assets/blossom_mountain_140bpm.ogg");
     Music_Play(music, true);
 
+    mooSfxTimer = 0.0f;
+
     Start_Init();
     End_Init();
 }
@@ -217,15 +219,18 @@ void SaucerGame::update_gameloop() {
     mainCameraTransform.rotationDegrees.y = -15.;
 
     // UI
-
     if (iceCreamMeterProgress >= 1.0f)
     {
         // YOU WIN!
-
-    } else {
+    }
+    else
+    {
         //iceCreamMeterProgress -= timeDelta * 0.01; // Melt ice cream
         iceCreamMeterProgress = std::max(0.f, iceCreamMeterProgress);
     }
+
+    // AUDIO
+    mooSfxTimer += timeDelta;
 }
 
 void SaucerGame::draw() {
@@ -366,8 +371,10 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
 
     if (beaming) {
         debugstream << "BEAMING!" << std::endl;
+        Scene_FindChildNode(ufoScene->rootNode, "Beam")->transform->scale.z = 1.0f;
     } else {
         debugstream << "Not beaming." << std::endl;
+        Scene_FindChildNode(ufoScene->rootNode, "Beam")->transform->scale.z = 0.0f;
     }
 
     float stress_max = 0;
@@ -396,6 +403,7 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
             if (distance < 0.2f) {
                 debugstream << "MILKING!" << std::endl;
                 addMilkTick(timeDelta, cow.stress);
+                PlayMooSfx(cow.stress > 0.5f);
             }
 
             if (distance_plane < 0.5f) {
@@ -405,6 +413,8 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
                 V3f cow_pos_delta;
                 V3f_Scale(cow_to_saucer_dir, timeDelta, cow_pos_delta);
                 V3f_Add(cow.node->transform->position, cow_pos_delta, cow.node->transform->position);
+
+                PlayMooSfx(false);
             }
         } else if (cow.behavior == CowState::BehaviorState::lifted) {
             // fall down
@@ -433,4 +443,20 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
 void SaucerGame::addMilkTick(float timeDelta, float stress) {
     iceCreamMeterProgress += timeDelta * 0.1f * (1. - stress * 1.25);
     iceCreamMeterProgress = std::max(0.f, std::min(iceCreamMeterProgress, 1.0f));
+}
+
+void SaucerGame::PlayMooSfx(bool melted)
+{
+    if(mooSfxTimer > 1.0f)
+    {
+        if(melted)
+        {
+            Sound_Play(sfxMeltMoos[rand() % 3]);
+        }
+        else
+        {
+            Sound_Play(sfxCommonMoos[rand() % 6]);
+        }
+        mooSfxTimer = 0.0f;
+    }
 }
