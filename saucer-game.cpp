@@ -38,11 +38,14 @@ static Node *cloneCowNode(const Node *node) {
 
 static void randomizeCowTargetPosition(SaucerGame::CowState &cow) {
     cow.targetPosition.z = 0.0f;
-    cow.targetPosition.y = (float)rand()/(float)(RAND_MAX) * SaucerGame::MAP_SIZE - SaucerGame::MAP_SIZE / 2.0f;
-    cow.targetPosition.x = (float)rand()/(float)(RAND_MAX) * SaucerGame::MAP_SIZE - SaucerGame::MAP_SIZE / 2.0f;
+    cow.targetPosition.y = Random_FloatNormalized() * SaucerGame::MAP_SIZE - SaucerGame::MAP_SIZE / 2.0f;
+    cow.targetPosition.x = Random_FloatNormalized() * SaucerGame::MAP_SIZE - SaucerGame::MAP_SIZE / 2.0f;
 }
 
 void SaucerGame::init() {
+    
+    Random_SetSeed(WiiController_GetRoll(mgdl_GetController(0)) * WiiController_GetPitch(mgdl_GetController(0)));
+
     debugMenu = Menu_CreateDefault();
 
     mainScene = Scene_CreateEmpty();
@@ -61,9 +64,9 @@ void SaucerGame::init() {
         cows[i].speed = V3f_Create(0, 0, 0);
         cows[i].stress = 0;
         cows[i].node = cloneCowNode(cowScene->rootNode);
-        cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
-        cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
-        cows[i].node->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
+        cows[i].node->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        cows[i].node->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        cows[i].node->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
         short counter = 0;
         cows[i].parachute = Scene_FindChildNodeByIndex(cows[i].node, 7, &counter);
         cows[i].parachute->transform->scale.z = 0.0f;
@@ -82,13 +85,13 @@ void SaucerGame::init() {
         treeScenes[i] = mgdl_LoadFBX("assets/Tree.fbx");
         Scene_SetMaterialTexture(treeScenes[i], "Material", ufoTexture);
         Scene_AddChildNode(mainScene, mainScene->rootNode, treeScenes[i]->rootNode);
-        treeScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
-        treeScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        treeScenes[i]->rootNode->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        treeScenes[i]->rootNode->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
         treeScenes[i]->rootNode->transform->position.z = 0.0f;
-        treeScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
+        treeScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
         treeScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
         treeScenes[i]->rootNode->transform->rotationDegrees.x = 0.0f;
-        float scale = 0.75f + (float)rand()/(float)(RAND_MAX/0.3f);
+        float scale = 0.75f + Random_Float(0.0f, 0.3f);
         treeScenes[i]->rootNode->transform->scale.z = scale;
         treeScenes[i]->rootNode->transform->scale.y = scale;
         treeScenes[i]->rootNode->transform->scale.x = scale;
@@ -99,13 +102,13 @@ void SaucerGame::init() {
         bushScenes[i] = mgdl_LoadFBX("assets/Bush.fbx");
         Scene_SetMaterialTexture(bushScenes[i], "Material", ufoTexture);
         Scene_AddChildNode(mainScene, mainScene->rootNode, bushScenes[i]->rootNode);
-        bushScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
-        bushScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        bushScenes[i]->rootNode->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        bushScenes[i]->rootNode->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
         bushScenes[i]->rootNode->transform->position.z = 0.0f;
-        bushScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
+        bushScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
         bushScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
         bushScenes[i]->rootNode->transform->rotationDegrees.x = 0.0f;
-        float scale = 0.75f + (float)rand()/(float)(RAND_MAX/0.3f);
+        float scale = 0.75f + Random_Float(0.0f, 0.3f);
         bushScenes[i]->rootNode->transform->scale.z = scale;
         bushScenes[i]->rootNode->transform->scale.y = scale;
         bushScenes[i]->rootNode->transform->scale.x = scale;
@@ -121,14 +124,14 @@ void SaucerGame::init() {
     for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
     {
         grassSprites[i].sprite = grassSprite;
-        grassSprites[i].position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
-        grassSprites[i].position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        grassSprites[i].position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        grassSprites[i].position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
         grassSprites[i].position.z = 0.0f;
         grassSprites[i].euler.x = 90.0f;
         grassSprites[i].euler.y = 0.0f;
-        grassSprites[i].euler.z = (float)(rand() % 180);
+        grassSprites[i].euler.z = Random_Float(0.0f, 180.0f);
         grassSprites[i].scale = 0.33f;
-        grassSprites[i].frame = rand() % GRASS_SPRITE_FRAME_COUNT;
+        grassSprites[i].frame = Random_Int(0, GRASS_SPRITE_FRAME_COUNT);
     }
 
     sfxCommonMoos[0] = mgdl_LoadSound("assets/sfx/deepmoo01.wav");
@@ -536,11 +539,11 @@ void SaucerGame::PlayMooSfx(bool melted)
     {
         if(melted)
         {
-            Sound_Play(sfxMeltMoos[rand() % 3]);
+            Sound_Play(sfxMeltMoos[Random_Int(0,3)]);
         }
         else
         {
-            Sound_Play(sfxCommonMoos[rand() % 6]);
+            Sound_Play(sfxCommonMoos[Random_Int(0,6)]);
         }
         mooSfxTimer = 0.0f;
     }
