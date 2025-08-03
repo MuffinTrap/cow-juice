@@ -38,9 +38,10 @@ void SaucerGame::init() {
     mainScene = Scene_CreateEmpty();
     
     ufoTexture = mgdl_LoadTexture("assets/Ufo.png", TextureFilterModes::Linear);
+    tilesTexture = mgdl_LoadTexture("assets/Tiles.png", TextureFilterModes::Linear);
 
     terrainScene = mgdl_LoadFBX("assets/Plane.fbx");
-    Scene_SetMaterialTexture(terrainScene, "Material", ufoTexture);
+    Scene_SetMaterialTexture(terrainScene, "Material", tilesTexture);
     Scene_AddChildNode(mainScene, mainScene->rootNode, terrainScene->rootNode);
     
     cowScene = mgdl_LoadFBX("assets/Cow.fbx");
@@ -50,10 +51,17 @@ void SaucerGame::init() {
         cows[i].speed = V3f_Create(0, 0, 0);
         cows[i].stress = 0;
         cows[i].node = cloneCowNode(cowScene->rootNode);
-        cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * 32.0f - 16.f;
-        cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * 32.0f - 16.f;
+        cows[i].node->transform->position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        cows[i].node->transform->position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        cows[i].node->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
         short counter = 0;
         cows[i].parachute = Scene_FindChildNodeByIndex(cows[i].node, 7, &counter);
+        cows[i].parachute->transform->scale.z = 0.0f;
+        cows[i].parachute->transform->scale.y = 0.0f;
+        cows[i].parachute->transform->scale.x = 0.0f;
+        cows[i].targetPosition.z = 0.0f;
+        cows[i].targetPosition.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        cows[i].targetPosition.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
         Scene_AddChildNode(mainScene, mainScene->rootNode, cows[i].node);
     }
     
@@ -66,8 +74,8 @@ void SaucerGame::init() {
         treeScenes[i] = mgdl_LoadFBX("assets/Tree.fbx");
         Scene_SetMaterialTexture(treeScenes[i], "Material", ufoTexture);
         Scene_AddChildNode(mainScene, mainScene->rootNode, treeScenes[i]->rootNode);
-        treeScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
-        treeScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
+        treeScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        treeScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
         treeScenes[i]->rootNode->transform->position.z = 0.0f;
         treeScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
         treeScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
@@ -83,8 +91,8 @@ void SaucerGame::init() {
         bushScenes[i] = mgdl_LoadFBX("assets/Bush.fbx");
         Scene_SetMaterialTexture(bushScenes[i], "Material", ufoTexture);
         Scene_AddChildNode(mainScene, mainScene->rootNode, bushScenes[i]->rootNode);
-        bushScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
-        bushScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
+        bushScenes[i]->rootNode->transform->position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        bushScenes[i]->rootNode->transform->position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
         bushScenes[i]->rootNode->transform->position.z = 0.0f;
         bushScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg((float)(rand() % 180));
         bushScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
@@ -105,8 +113,8 @@ void SaucerGame::init() {
     for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
     {
         grassSprites[i].sprite = grassSprite;
-        grassSprites[i].position.x = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
-        grassSprites[i].position.y = (float)rand()/(float)(RAND_MAX/10.0f) - 5.0f;
+        grassSprites[i].position.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        grassSprites[i].position.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
         grassSprites[i].position.z = 0.0f;
         grassSprites[i].euler.x = 90.0f;
         grassSprites[i].euler.y = 0.0f;
@@ -434,6 +442,8 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
                 V3f_Scale(cow_to_saucer_dir, timeDelta, cow_pos_delta);
                 V3f_Add(cow.node->transform->position, cow_pos_delta, cow.node->transform->position);
 
+                cow.node->transform->rotationDegrees.z += 80.0f * timeDelta;
+
                 PlayMooSfx(false);
             }
         } else if (cow.behavior == CowState::BehaviorState::lifted) {
@@ -449,22 +459,42 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
                 // touch ground
                 cow.behavior = CowState::BehaviorState::grace;
                 cow.node->transform->position.z = ground_height;
-                cow.speed.z = 0;
+                cow.speed.z = 0.0f;
             }
         }
 
-        if (cow.behavior == CowState::BehaviorState::lifted)
+        if(cow.behavior == CowState::BehaviorState::grace)
         {
-            cow.parachute->transform->scale.z = 1.0f;
-            cow.parachute->transform->scale.y = 1.0f;
-            cow.parachute->transform->scale.x = 1.0f;
+            //float speed = 10.0f;
+            //V3f dir = vec3Subtract(cow.node->transform->position, cow.targetPosition);
+            //dir = vec3Normalize(dir);
+            //cow.speed = vec3Multiply(dir, speed);
+            //V3f moveDelta = vec3Multiply(cow.speed, timeDelta);
+            //cow.node->transform->position = vec3Add(cow.node->transform->position, moveDelta);
+        //
+            //debugstream << "posX: " << cow.node->transform->position.x << "\n";
+            //debugstream << "posY: " << cow.node->transform->position.y << "\n";
+            //debugstream << "posZ: " << cow.node->transform->position.z << "\n";
+            //debugstream << "targetX: " << cow.targetPosition.x << "\n";
+            //debugstream << "targetY: " << cow.targetPosition.y << "\n";
+            //debugstream << "targetZ: " << cow.targetPosition.z << "\n";
+            //debugstream << "speedX: " << cow.speed.x << "\n";
+            //debugstream << "speedY: " << cow.speed.y << "\n";
+            //debugstream << "speedZ: " << cow.speed.z << "\n";
         }
-        else
-        {
-            cow.parachute->transform->scale.z = 0.0f;
-            cow.parachute->transform->scale.y = 0.0f;
-            cow.parachute->transform->scale.x = 0.0f;
-        }
+
+        ///if (cow.behavior == CowState::BehaviorState::lifted)
+        ///{
+        ///    cow.parachute->transform->scale.z = 1.0f;
+        ///    cow.parachute->transform->scale.y = 1.0f;
+        ///    cow.parachute->transform->scale.x = 1.0f;
+        ///}
+        ///else
+        ///{
+        ///    cow.parachute->transform->scale.z = 0.0f;
+        ///    cow.parachute->transform->scale.y = 0.0f;
+        ///    cow.parachute->transform->scale.x = 0.0f;
+        ///}
 
         debugstream << "stress: " << cows[i].stress;
         debugstream << std::endl;

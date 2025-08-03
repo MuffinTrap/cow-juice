@@ -42,6 +42,7 @@ public:
     
     Scene *ufoScene;
     Texture *ufoTexture;
+    Texture *tilesTexture;
     Scene *cowScene;
     Scene *terrainScene;
     Sprite* iceCreamMeter;
@@ -50,8 +51,10 @@ public:
     Sprite* cowBubbleSprite;
     Sprite* cowFaceSprite;
 
-    static const int TREE_MODEL_AMOUNT = 16;
-    static const int BUSH_MODEL_AMOUNT = 16;
+    static const int MAP_SIZE = 40;
+
+    static const int TREE_MODEL_AMOUNT = 128;
+    static const int BUSH_MODEL_AMOUNT = 64;
     Scene *treeScenes[TREE_MODEL_AMOUNT];
     Scene *bushScenes[BUSH_MODEL_AMOUNT];
 
@@ -63,6 +66,7 @@ public:
         enum class BehaviorState { grace, panic, lifted } behavior;
         V3f speed;
         float stress;
+        V3f targetPosition;
     };
     std::array<CowState, 16> cows;
 
@@ -78,7 +82,7 @@ public:
         float scale;
         int frame;
     };
-    static const int GRASS_SPRITE_AMOUNT = 128;
+    static const int GRASS_SPRITE_AMOUNT = 700;
     static const int GRASS_SPRITE_FRAME_COUNT = 4;
     AnimatedWorldSprite* grassSprites;
 
