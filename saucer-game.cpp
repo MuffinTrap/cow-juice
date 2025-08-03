@@ -453,8 +453,8 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
                 debugstream << "LIFTING!" << std::endl;
                 cow.behavior = CowState::BehaviorState::lifted;
                 
-                cow.speed.x = 0;
-                cow.speed.y = 0;
+                cow.speed.x = cow_saucer_diff.x * 0.1f;
+                cow.speed.y = cow_saucer_diff.y * 0.1f;
                 cow.speed.z = 1.9f * cow_to_saucer_dir.z;
 
                 cow.node->transform->rotationDegrees.z += 80.0f * timeDelta;
