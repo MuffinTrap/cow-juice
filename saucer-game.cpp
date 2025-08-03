@@ -1,5 +1,6 @@
 #include "saucer-game.h"
 
+#include "mgdl/ccVector/ccVector.h"
 #include "mgdl/mgdl-color.h"
 #include "mgdl/mgdl-controller.h"
 #include "mgdl/mgdl-gui.h"
@@ -19,6 +20,9 @@
 #include "start-screen.h"
 #include "end-screen.h"
 
+// Uncomment to show debug text
+// #define SHOW_DEBUG_TEXT
+
 #define UNUSED(x) (void)(x)
 
 const float gravity = -1.8;
@@ -30,6 +34,12 @@ static Node *cloneCowNode(const Node *node) {
     n->material = node->material;
     n->mesh = node->mesh;
     return n;
+}
+
+static void randomizeCowTargetPosition(SaucerGame::CowState &cow) {
+    cow.targetPosition.z = 0.0f;
+    cow.targetPosition.y = (float)rand()/(float)(RAND_MAX) * SaucerGame::MAP_SIZE - SaucerGame::MAP_SIZE / 2.0f;
+    cow.targetPosition.x = (float)rand()/(float)(RAND_MAX) * SaucerGame::MAP_SIZE - SaucerGame::MAP_SIZE / 2.0f;
 }
 
 void SaucerGame::init() {
@@ -59,9 +69,7 @@ void SaucerGame::init() {
         cows[i].parachute->transform->scale.z = 0.0f;
         cows[i].parachute->transform->scale.y = 0.0f;
         cows[i].parachute->transform->scale.x = 0.0f;
-        cows[i].targetPosition.z = 0.0f;
-        cows[i].targetPosition.y = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
-        cows[i].targetPosition.x = (float)rand()/(float)(RAND_MAX) * MAP_SIZE - MAP_SIZE / 2.0f;
+        randomizeCowTargetPosition(cows[i]);
         Scene_AddChildNode(mainScene, mainScene->rootNode, cows[i].node);
     }
     
@@ -330,7 +338,10 @@ void SaucerGame::draw_gameloop()
     glLoadIdentity();
     Menu_SetActive(debugMenu);
     Menu_Start(0, mgdl_GetScreenHeight(), mgdl_GetScreenWidth());
+    
+    #ifdef SHOW_DEBUG_TEXT
     Menu_Text(debugstream.str().c_str());
+    #endif
 
     // Draw UI
     mgdl_glSetAlphaTest(true);
@@ -464,24 +475,31 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
             }
         }
 
-        if(cow.behavior == CowState::BehaviorState::grace)
+        if (cow.behavior == CowState::BehaviorState::grace)
         {
-            //float speed = 10.0f;
-            //V3f dir = vec3Subtract(cow.node->transform->position, cow.targetPosition);
-            //dir = vec3Normalize(dir);
-            //cow.speed = vec3Multiply(dir, speed);
-            //V3f moveDelta = vec3Multiply(cow.speed, timeDelta);
-            //cow.node->transform->position = vec3Add(cow.node->transform->position, moveDelta);
+            float speed = 1.f;
+            V3f dir = vec3Subtract(cow.targetPosition, cow.node->transform->position);
+            float distanceToTarget = vec3Length(dir);
+            dir.z = 0;
+            dir = vec3Normalize(dir);
+            cow.speed = vec3Multiply(dir, speed);
+            V3f moveDelta = vec3Multiply(cow.speed, timeDelta);
+            cow.node->transform->position = vec3Add(cow.node->transform->position, moveDelta);
+
+            if (distanceToTarget < 0.5) {
+                randomizeCowTargetPosition(cow);
+            }
+
         //
-            //debugstream << "posX: " << cow.node->transform->position.x << "\n";
-            //debugstream << "posY: " << cow.node->transform->position.y << "\n";
-            //debugstream << "posZ: " << cow.node->transform->position.z << "\n";
-            //debugstream << "targetX: " << cow.targetPosition.x << "\n";
-            //debugstream << "targetY: " << cow.targetPosition.y << "\n";
-            //debugstream << "targetZ: " << cow.targetPosition.z << "\n";
-            //debugstream << "speedX: " << cow.speed.x << "\n";
-            //debugstream << "speedY: " << cow.speed.y << "\n";
-            //debugstream << "speedZ: " << cow.speed.z << "\n";
+            // debugstream << "posX: " << cow.node->transform->position.x << "\n";
+            // debugstream << "posY: " << cow.node->transform->position.y << "\n";
+            // debugstream << "posZ: " << cow.node->transform->position.z << "\n";
+            // debugstream << "targetX: " << cow.targetPosition.x << "\n";
+            // debugstream << "targetY: " << cow.targetPosition.y << "\n";
+            // debugstream << "targetZ: " << cow.targetPosition.z << "\n";
+            // debugstream << "speedX: " << cow.speed.x << "\n";
+            // debugstream << "speedY: " << cow.speed.y << "\n";
+            // debugstream << "speedZ: " << cow.speed.z << "\n";
         }
 
         ///if (cow.behavior == CowState::BehaviorState::lifted)
