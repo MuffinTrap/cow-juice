@@ -486,6 +486,9 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
             V3f moveDelta = vec3Multiply(cow.speed, timeDelta);
             cow.node->transform->position = vec3Add(cow.node->transform->position, moveDelta);
 
+            float heading_angle = std::atan2(dir.y, dir.x) + M_PI;
+            cow.node->transform->rotationDegrees.z = Rad2Deg(heading_angle);
+
             if (distanceToTarget < 0.5) {
                 randomizeCowTargetPosition(cow);
             }
