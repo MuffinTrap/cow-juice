@@ -452,18 +452,20 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
             if (distance_plane < 0.5f) {
                 debugstream << "LIFTING!" << std::endl;
                 cow.behavior = CowState::BehaviorState::lifted;
-
-                V3f cow_pos_delta;
-                V3f_Scale(cow_to_saucer_dir, timeDelta, cow_pos_delta);
-                V3f_Add(cow.node->transform->position, cow_pos_delta, cow.node->transform->position);
+                
+                cow.speed.x = 0;
+                cow.speed.y = 0;
+                cow.speed.z = 1.9f * cow_to_saucer_dir.z;
 
                 cow.node->transform->rotationDegrees.z += 80.0f * timeDelta;
 
                 PlayMooSfx(false);
             }
-        } else if (cow.behavior == CowState::BehaviorState::lifted) {
+        }
+        
+        if (cow.behavior == CowState::BehaviorState::lifted) {
             // fall down
-            cow.speed.z += gravity * 1.4f * timeDelta;
+            cow.speed.z += gravity * timeDelta;
 
             float ground_height = 0.f; // TODO get from terrain
             V3f cow_pos_delta;
