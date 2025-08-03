@@ -443,7 +443,7 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
         stress_max = std::max(stress_max, cows[i].stress);
 
         if (beaming) {
-            if (distance < 0.2f) {
+            if (distance < 0.4f) {
                 debugstream << "MILKING!" << std::endl;
                 addMilkTick(timeDelta, cow.stress);
                 PlayMooSfx(cow.stress > 0.5f);
@@ -531,7 +531,7 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
 }
 
 void SaucerGame::addMilkTick(float timeDelta, float stress) {
-    iceCreamMeterProgress += timeDelta * 0.1f * (1. - stress * 1.25);
+    iceCreamMeterProgress += timeDelta * 0.2f * (1. - stress * 1.25);
     iceCreamMeterProgress = std::max(0.f, std::min(iceCreamMeterProgress, 1.0f));
 }
 
