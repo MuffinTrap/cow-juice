@@ -21,20 +21,11 @@
 #include "end-screen.h"
 
 // Uncomment to show debug text
-// #define SHOW_DEBUG_TEXT
+//#define SHOW_DEBUG_TEXT
 
 #define UNUSED(x) (void)(x)
 
 const float gravity = -1.8;
-
-static Node *cloneCowNode(const Node *node) {
-    Node *n = Node_Create(1);
-    n->children = node->children;
-    n->light = node->light;
-    n->material = node->material;
-    n->mesh = node->mesh;
-    return n;
-}
 
 static void randomizeCowTargetPosition(SaucerGame::CowState &cow) {
     cow.targetPosition.z = 0.0f;
@@ -63,55 +54,56 @@ void SaucerGame::init() {
         cows[i].behavior = CowState::BehaviorState::grace;
         cows[i].speed = V3f_Create(0, 0, 0);
         cows[i].stress = 0;
-        cows[i].node = cloneCowNode(cowScene->rootNode);
+        cows[i].node = Node_Clone(Scene_GetRootNode(cowScene), (NodeTransform|NodeChildren));
         cows[i].node->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
         cows[i].node->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
         cows[i].node->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
-        short counter = 0;
-        cows[i].parachute = Scene_FindChildNodeByIndex(cows[i].node, 7, &counter);
-        cows[i].parachute->transform->scale.z = 0.0f;
-        cows[i].parachute->transform->scale.y = 0.0f;
-        cows[i].parachute->transform->scale.x = 0.0f;
+        cows[i].parachute = Node_FindChildByIndex(cows[i].node, 7);
+        Node_DisableDrawing(cows[i].parachute);
         randomizeCowTargetPosition(cows[i]);
         Scene_AddChildNode(mainScene, mainScene->rootNode, cows[i].node);
     }
-    
+
     ufoScene = mgdl_LoadFBX("assets/Ufo.fbx");
     Scene_SetMaterialTexture(ufoScene, "Material", ufoTexture);
     Scene_AddChildNode(mainScene, mainScene->rootNode, ufoScene->rootNode);
 
+    treeScene = mgdl_LoadFBX("assets/Tree.fbx");
+    Scene_SetMaterialTexture(treeScene, "Material", ufoTexture);
+    treeNodes = (Node**)malloc(sizeof(Node*) * TREE_MODEL_AMOUNT);
     for(int i = 0; i < TREE_MODEL_AMOUNT; ++i)
     {
-        treeScenes[i] = mgdl_LoadFBX("assets/Tree.fbx");
-        Scene_SetMaterialTexture(treeScenes[i], "Material", ufoTexture);
-        Scene_AddChildNode(mainScene, mainScene->rootNode, treeScenes[i]->rootNode);
-        treeScenes[i]->rootNode->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        treeScenes[i]->rootNode->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        treeScenes[i]->rootNode->transform->position.z = 0.0f;
-        treeScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
-        treeScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
-        treeScenes[i]->rootNode->transform->rotationDegrees.x = 0.0f;
+        treeNodes[i] = Node_Clone(Scene_GetRootNode(treeScene), (NodeTransform|NodeChildren));
+        treeNodes[i]->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        treeNodes[i]->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        treeNodes[i]->transform->position.z = 0.0f;
+        treeNodes[i]->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
+        treeNodes[i]->transform->rotationDegrees.y = 0.0f;
+        treeNodes[i]->transform->rotationDegrees.x = 0.0f;
         float scale = 0.75f + Random_Float(0.0f, 0.3f);
-        treeScenes[i]->rootNode->transform->scale.z = scale;
-        treeScenes[i]->rootNode->transform->scale.y = scale;
-        treeScenes[i]->rootNode->transform->scale.x = scale;
+        treeNodes[i]->transform->scale.z = scale;
+        treeNodes[i]->transform->scale.y = scale;
+        treeNodes[i]->transform->scale.x = scale;
+        Scene_AddChildNode(mainScene, mainScene->rootNode, treeNodes[i]);
     }
 
+    bushScene = mgdl_LoadFBX("assets/Bush.fbx");
+    Scene_SetMaterialTexture(bushScene, "Material", ufoTexture);
+    bushNodes = (Node**)malloc(sizeof(Node*) * BUSH_MODEL_AMOUNT);
     for(int i = 0; i < BUSH_MODEL_AMOUNT; ++i)
     {
-        bushScenes[i] = mgdl_LoadFBX("assets/Bush.fbx");
-        Scene_SetMaterialTexture(bushScenes[i], "Material", ufoTexture);
-        Scene_AddChildNode(mainScene, mainScene->rootNode, bushScenes[i]->rootNode);
-        bushScenes[i]->rootNode->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        bushScenes[i]->rootNode->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        bushScenes[i]->rootNode->transform->position.z = 0.0f;
-        bushScenes[i]->rootNode->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
-        bushScenes[i]->rootNode->transform->rotationDegrees.y = 0.0f;
-        bushScenes[i]->rootNode->transform->rotationDegrees.x = 0.0f;
+        bushNodes[i] = Node_Clone(Scene_GetRootNode(bushScene), (NodeTransform|NodeChildren));
+        bushNodes[i]->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        bushNodes[i]->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        bushNodes[i]->transform->position.z = 0.0f;
+        bushNodes[i]->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
+        bushNodes[i]->transform->rotationDegrees.y = 0.0f;
+        bushNodes[i]->transform->rotationDegrees.x = 0.0f;
         float scale = 0.75f + Random_Float(0.0f, 0.3f);
-        bushScenes[i]->rootNode->transform->scale.z = scale;
-        bushScenes[i]->rootNode->transform->scale.y = scale;
-        bushScenes[i]->rootNode->transform->scale.x = scale;
+        bushNodes[i]->transform->scale.z = scale;
+        bushNodes[i]->transform->scale.y = scale;
+        bushNodes[i]->transform->scale.x = scale;
+        Scene_AddChildNode(mainScene, mainScene->rootNode, bushNodes[i]);
     }
 
     cowFaceSprite = mgdl_LoadSprite("assets/CowFace.png", 60, 64);
@@ -174,13 +166,16 @@ void SaucerGame::update()
 }
 
 void SaucerGame::update_gameloop() {
-    debugstream.str(std::string());
-
     float time = mgdl_GetElapsedSeconds();
     float timeDelta = mgdl_GetDeltaTime();
 
+    #ifdef SHOW_DEBUG_TEXT
+    debugstream.str(std::string());
+
+
     debugstream << "UPDATE\ntime: " << time << "\n  delta: " << timeDelta << std::endl;
     debugstream << "Press + to win" << std::endl;
+    #endif
    
     //////// INPUT ///////////
 
@@ -196,16 +191,24 @@ void SaucerGame::update_gameloop() {
         End_CalculateScore(1, 1);
         currentState = EndScreen;
     }
-    
-    if(button_beam_pressed && isBeamSoundPaused)
+
+    if (button_beam_pressed)
     {
-        isBeamSoundPaused = false;
-        Sound_Play(sfxBeam);
+        ufoState = Beaming;
+        if(isBeamSoundPaused)
+        {
+            isBeamSoundPaused = false;
+            Sound_Play(sfxBeam);
+        }
     }
-    else if(!button_beam_pressed && !isBeamSoundPaused)
+    else
     {
-        isBeamSoundPaused = true;
-        Sound_Stop(sfxBeam);
+        ufoState = Idle;
+        if(!isBeamSoundPaused)
+        {
+            isBeamSoundPaused = true;
+            Sound_Stop(sfxBeam);
+        }
     }
 
     ///////////////////////
@@ -233,9 +236,9 @@ void SaucerGame::update_gameloop() {
     ufoScene->rootNode->transform->rotationDegrees.y = Rad2Deg(-tilt_forward);
     ufoScene->rootNode->transform->rotationDegrees.x = Rad2Deg(tilt_side);
 
-    updateCowBeaming(time, timeDelta, button_beam_pressed);
+    updateCowBeaming(timeDelta);
 
-    Scene_FindChildNode(ufoScene->rootNode, "Disc")->transform->rotationDegrees.z += 150.0f * V3f_Length(move_delta);
+    Node_FindChildByName(ufoScene->rootNode, "Disc")->transform->rotationDegrees.z += 150.0f * V3f_Length(move_delta);
 
     // Camera
     V3f cam_pos_target;
@@ -340,7 +343,7 @@ void SaucerGame::draw_gameloop()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     Menu_SetActive(debugMenu);
-    Menu_Start(0, mgdl_GetScreenHeight(), mgdl_GetScreenWidth());
+    Menu_Start(24, mgdl_GetScreenHeight()-8, mgdl_GetScreenWidth());
     
     #ifdef SHOW_DEBUG_TEXT
     Menu_Text(debugstream.str().c_str());
@@ -362,12 +365,26 @@ void SaucerGame::draw_gameloop()
         Sprite_Draw2D(cowFaceSprite, cowStressUiState, 67, 250, 100, LJustify, RJustify, Color_GetDefaultColor(Color_White));
     }
 
-    //Scene_DebugDraw(mainScene, debugMenu, 0, mgdl_GetScreenHeight(), 0);
+    //Scene_DebugDraw(mainScene, debugMenu, 32, mgdl_GetScreenHeight()-8, 0);
 }
 
 void SaucerGame::quit() {
 
-    
+    for(int i = 0; i < BUSH_MODEL_AMOUNT; ++i)
+    {
+        free(bushNodes[i]);
+    }
+    for(int i = 0; i < TREE_MODEL_AMOUNT; ++i)
+    {
+        free(treeNodes[i]);
+    }
+    for (size_t i = 0; i < cows.size(); ++i) {
+        free(cows[i].node);
+    }
+
+    free(treeScene);
+    free(bushScene);
+    free(cowScene);
 }
 
 void SaucerGame::Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor)
@@ -409,27 +426,31 @@ void SaucerGame::Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, 
 
 }
 
-void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
-    UNUSED(time);
+void SaucerGame::updateCowBeaming(float timeDelta) {
 
-    if (beaming) {
+    if (ufoState == Beaming) {
+#ifdef SHOW_DEBUG_TEXT
         debugstream << "BEAMING!" << std::endl;
-        Scene_FindChildNode(ufoScene->rootNode, "Beam")->transform->scale.z = 1.0f;
+#endif
+        Node_FindChildByName(ufoScene->rootNode, "Beam")->transform->scale.z = 1.0f;
     } else {
+#ifdef SHOW_DEBUG_TEXT
         debugstream << "Not beaming." << std::endl;
-        Scene_FindChildNode(ufoScene->rootNode, "Beam")->transform->scale.z = 0.0f;
+#endif
+        Node_FindChildByName(ufoScene->rootNode, "Beam")->transform->scale.z = 0.0f;
     }
 
     float stress_max = 0;
 
     for (size_t i = 0; i < cows.size(); ++i) {
         CowState &cow = cows[i];
+#ifdef SHOW_DEBUG_TEXT
         debugstream << "Cow #" << i << ":" << std::endl;
+#endif
 
         V3f cow_saucer_diff;
         V3f_Sub(ufoScene->rootNode->transform->position, cow.node->transform->position, cow_saucer_diff);
         float distance = V3f_Length(cow_saucer_diff);
-        UNUSED(distance);
         V3f cow_to_saucer_dir;
         V3f_Normalize(cow_saucer_diff, cow_to_saucer_dir);
         
@@ -442,15 +463,25 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
         cows[i].stress = std::max(0.f, std::min(cows[i].stress - timeDelta * 0.2f + stressfulness * 0.4f * timeDelta, 1.f));
         stress_max = std::max(stress_max, cows[i].stress);
 
-        if (beaming) {
+        if (ufoState == Beaming) {
             if (distance < 0.4f) {
+                #ifdef SHOW_DEBUG_TEXT
                 debugstream << "MILKING!" << std::endl;
+                #endif
+                ufoState = Milking;
                 addMilkTick(timeDelta, cow.stress);
                 PlayMooSfx(cow.stress > 0.5f);
             }
+            else
+            {
+                ufoState = Beaming;
+            }
 
             if (distance_plane < 0.5f) {
+                #ifdef SHOW_DEBUG_TEXT
                 debugstream << "LIFTING!" << std::endl;
+                #endif
+                ufoState = Lifting;
                 cow.behavior = CowState::BehaviorState::lifted;
                 
                 cow.speed.x = cow_saucer_diff.x * 0.1f;
@@ -460,6 +491,10 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
                 cow.node->transform->rotationDegrees.z += 80.0f * timeDelta;
 
                 PlayMooSfx(false);
+            }
+            else
+            {
+                ufoState = Beaming;
             }
         }
         
@@ -510,21 +545,23 @@ void SaucerGame::updateCowBeaming(float time, float timeDelta, bool beaming) {
             // debugstream << "speedZ: " << cow.speed.z << "\n";
         }
 
-        ///if (cow.behavior == CowState::BehaviorState::lifted)
-        ///{
-        ///    cow.parachute->transform->scale.z = 1.0f;
-        ///    cow.parachute->transform->scale.y = 1.0f;
-        ///    cow.parachute->transform->scale.x = 1.0f;
-        ///}
-        ///else
-        ///{
-        ///    cow.parachute->transform->scale.z = 0.0f;
-        ///    cow.parachute->transform->scale.y = 0.0f;
-        ///    cow.parachute->transform->scale.x = 0.0f;
-        ///}
+        // When in air and falling, draw the parachute
+        if (cow.behavior == CowState::BehaviorState::lifted
+            && cow.speed.z < 0.0f
+            && ufoState != Milking
+            && ufoState != Lifting)
+        {
+            Node_EnableDrawing(cow.parachute);
+        }
+        else
+        {
+            Node_DisableDrawing(cow.parachute);
+        }
 
+#ifdef SHOW_DEBUG_TEXT
         debugstream << "stress: " << cows[i].stress;
         debugstream << std::endl;
+#endif
     }
 
     cowStressUiState = (int)(stress_max * (float)COW_STRESS_FRAME_COUNT - 1);

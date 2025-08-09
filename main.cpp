@@ -42,7 +42,7 @@ void quit()
 
 int main()
 {
-    mgdl_InitSystem("mgdl example project",
+    mgdl_InitSystem("Moo Juice",
         ScreenAspect::Screen4x3,
             init,
             frame,

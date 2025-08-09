@@ -15,6 +15,14 @@ enum GameState
     EndScreen
 };
 
+enum UfoState
+{
+    Idle,
+    Beaming,
+    Lifting,
+    Milking
+};
+
 class SaucerGame {
 public:
     SaucerGame() = default;
@@ -26,7 +34,7 @@ public:
     void quit();
 
     void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
-    void updateCowBeaming(float time, float timeDelta, bool button_beam_pressed);
+    void updateCowBeaming(float timeDelta);
     void addMilkTick(float timeDelta, float stress);
     void PlayMooSfx(bool melted);
 
@@ -36,6 +44,7 @@ public:
     int cowStressUiState = COW_STRESS_NONE; // COW_STRESS_NONE Nothing in UI, 0 - COW_STRESS_FRAME_COUNT shows UI
 
     GameState currentState = CowHunt;
+    UfoState ufoState = Idle;
 
     Scene *mainScene;
     Transform mainCameraTransform;
@@ -45,6 +54,8 @@ public:
     Texture *tilesTexture;
     Scene *cowScene;
     Scene *terrainScene;
+    Scene *treeScene;
+    Scene *bushScene;
     Sprite* iceCreamMeter;
     Sprite* iceCreamMeterBackground;
     Sprite* grassSprite;
@@ -55,8 +66,8 @@ public:
 
     static const int TREE_MODEL_AMOUNT = 128;
     static const int BUSH_MODEL_AMOUNT = 64;
-    Scene *treeScenes[TREE_MODEL_AMOUNT];
-    Scene *bushScenes[BUSH_MODEL_AMOUNT];
+    Node **treeNodes;
+    Node **bushNodes;
 
     Menu *debugMenu;
 
@@ -82,7 +93,7 @@ public:
         float scale;
         int frame;
     };
-    static const int GRASS_SPRITE_AMOUNT = 700;
+    static const int GRASS_SPRITE_AMOUNT = 1;//700;
     static const int GRASS_SPRITE_FRAME_COUNT = 4;
     AnimatedWorldSprite* grassSprites;
 
