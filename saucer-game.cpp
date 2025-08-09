@@ -273,6 +273,14 @@ void SaucerGame::moveUfo(float time, float timeDelta)
     WiiController *controller = mgdl_GetController(0);
     float roll = WiiController_GetRoll(controller);
     float pitch = WiiController_GetPitch(controller);
+
+#ifndef MGDL_PLATFORM_WII
+    // On PC, move with left stick or WASD
+    V2f joystickDir = WiiController_GetNunchukJoystickDirection(controller);
+    pitch = V2f_X(joystickDir);
+    roll = V2f_Y(joystickDir);
+#endif
+
     if (ufo.handedness == RightHanded)
     {
         roll *= -1.0f;

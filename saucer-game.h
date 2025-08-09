@@ -8,6 +8,7 @@
 #include <mgdl.h>
 #include <sstream>
 
+
 enum GameState
 {
     StartScreen,
