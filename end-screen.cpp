@@ -52,17 +52,16 @@ bool End_Run()
     mgdl_InitOrthoProjection();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Menu_SetActive(endmenu);
-    Menu_Start(32, mgdl_GetScreenHeight()-32, mgdl_GetScreenWidth()/2);
+    Menu_Start(endmenu, 32, mgdl_GetScreenHeight()-32, mgdl_GetScreenWidth()/2);
 
     int visible = 0;
 
 
-    Menu_SetColors(Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
-    Menu_Text("Ice cream sold to highest bidder!");
+    Menu_SetColors(endmenu, Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
+    Menu_Text(endmenu, "Ice cream sold to highest bidder!");
 
-    Menu_SetColors(Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_Green), Color_GetDefaultColor(Color_White));
-    Menu_TextF("Black Market Profit %d", score_draw);
+    Menu_SetColors(endmenu, Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_Green), Color_GetDefaultColor(Color_White));
+    Menu_TextF(endmenu, "Black Market Profit %d", score_draw);
 
     if (score_draw < score_target)
     {
@@ -76,10 +75,10 @@ bool End_Run()
     // Make first cost visible
     visible = 1;
 
-    Menu_SetColors(Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
-    Menu_Text("---------------------------------");
-    Menu_SetColors(Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_Red), Color_GetDefaultColor(Color_White));
-    Menu_Text("Costs:");
+    Menu_SetColors(endmenu, Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
+    Menu_Text(endmenu, "---------------------------------");
+    Menu_SetColors(endmenu, Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_Red), Color_GetDefaultColor(Color_White));
+    Menu_Text(endmenu, "Costs:");
 
     int profit = score_target;
     // Increase counters
@@ -108,13 +107,13 @@ bool End_Run()
 
     for (int i = 0; i < visible; i++ )
     {
-        Menu_TextF("%s : -%i", costs[i], minus_draws[i]);
+        Menu_TextF(endmenu, "%s : -%i", costs[i], minus_draws[i]);
     }
     if (allcosts)
     {
-        Menu_SetColors(Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
-        Menu_Text("---------------------------------");
-        Menu_TextF("Total :                         %d", profit);
+        Menu_SetColors(endmenu, Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
+        Menu_Text(endmenu, "---------------------------------");
+        Menu_TextF(endmenu, "Total :                         %d", profit);
     }
 
     if (WiiController_ButtonPress(mgdl_GetController(0), ButtonA))

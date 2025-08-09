@@ -20,11 +20,8 @@ void init()
 
 void frame()
 {
-    //example.Update();
-
     // NOTE Use the mgdl_glClear to assure depth buffer working correctly on Wii
     mgdl_glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    //example.Draw();
 
     game.update();
     game.draw();

@@ -11,8 +11,11 @@
 enum GameState
 {
     StartScreen,
-    CowHunt,
-    EndScreen
+    SpaceTravel,    // Try out controls
+    SaucerEnter,    // Show map and put saucer down
+    CowHunt,        // Main game
+    SaucerExit,     // Fly saucer up
+    EndScreen       // Stonks!
 };
 
 enum UfoState
@@ -23,14 +26,34 @@ enum UfoState
     Milking
 };
 
+enum Handedness
+{
+    LeftHanded, // A button on the right side
+    RightHanded // A button on the left side
+};
+
+struct Ufo
+{
+    UfoState state;
+    Handedness handedness;
+    float movementSpeed;
+};
+
 class SaucerGame {
 public:
     SaucerGame() = default;
     void init();
     void update();
     void draw();
+    void drawSpace();
+    void setCamera();
+    void update_space();
     void update_gameloop();
+    void update_saucerExit();
+    void moveUfo(float time, float timeDelta);
     void draw_gameloop();
+    void draw_grass();
+    void drawUI();
     void quit();
 
     void Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor);
@@ -44,8 +67,10 @@ public:
     int cowStressUiState = COW_STRESS_NONE; // COW_STRESS_NONE Nothing in UI, 0 - COW_STRESS_FRAME_COUNT shows UI
 
     GameState currentState = CowHunt;
-    UfoState ufoState = Idle;
+    float saucerExitStartTime = 0.0f;
+    float saucerExitDuration = 3.0f;
 
+    Ufo ufo;
     Scene *mainScene;
     Transform mainCameraTransform;
     
@@ -61,6 +86,7 @@ public:
     Sprite* grassSprite;
     Sprite* cowBubbleSprite;
     Sprite* cowFaceSprite;
+    Texture* rightHandControls;
 
     static const int MAP_SIZE = 40;
 
@@ -93,7 +119,7 @@ public:
         float scale;
         int frame;
     };
-    static const int GRASS_SPRITE_AMOUNT = 1;//700;
+    static const int GRASS_SPRITE_AMOUNT = 512;
     static const int GRASS_SPRITE_FRAME_COUNT = 4;
     AnimatedWorldSprite* grassSprites;
 

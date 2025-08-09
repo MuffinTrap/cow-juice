@@ -8,8 +8,7 @@ void Start_Init()
 {
     Font* df = DefaultFont_GetDefaultFont();
     mainmenu = Menu_Create(df, 4.0f, 1.2f);
-    Menu_SetActive(mainmenu);
-    Menu_SetColors(Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
+    Menu_SetColors(mainmenu, Color_GetDefaultColor(Color_Black),Color_GetDefaultColor(Color_White), Color_GetDefaultColor(Color_White));
 
     logo = mgdl_LoadTexture("assets/MooJuice_Logo_BoxArtStyle.png", TextureFilterModes::Linear);
     // TODO  Menu_SetColors();
@@ -27,12 +26,11 @@ bool Start_Run()
     glLoadIdentity();
     mgdl_glSetAlphaTest(true);
 
-    Texture_Draw2DAligned(logo, mgdl_GetScreenWidth()/2, mgdl_GetScreenHeight()/2 + logo->height/2-40, 0.8f, Centered, Centered );
+    Texture_Draw2DAligned(logo, mgdl_GetScreenWidth()/2, mgdl_GetScreenHeight(), 0.8f, Centered, LJustify );
     mgdl_glSetAlphaTest(false);
 
-    Menu_SetActive(mainmenu);
-    Menu_Start(32, mgdl_GetScreenHeight()/2-20, mgdl_GetScreenWidth()/3);
-    Menu_Text("Press A to start");
+    Menu_Start(mainmenu, 32, mgdl_GetScreenHeight()/2-20, mgdl_GetScreenWidth()/3);
+    Menu_Text(mainmenu, "Press A to start");
 
     float r = mgdl_GetElapsedSeconds();
     float ss = r + cos(r/2.0f) * 10.0f;

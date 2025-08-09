@@ -37,12 +37,13 @@ void SaucerGame::init() {
     
     Random_SetSeed(WiiController_GetRoll(mgdl_GetController(0)) * WiiController_GetPitch(mgdl_GetController(0)));
 
-    debugMenu = Menu_CreateDefault();
+    debugMenu = Menu_Create(DefaultFont_GetDefaultFont(), 2.0f, 2.1f);
 
     mainScene = Scene_CreateEmpty();
     
     ufoTexture = mgdl_LoadTexture("assets/Ufo.png", TextureFilterModes::Linear);
     tilesTexture = mgdl_LoadTexture("assets/Tiles.png", TextureFilterModes::Linear);
+    rightHandControls = mgdl_LoadTexture("assets/right_hand.png", TextureFilterModes::Nearest);
 
     terrainScene = mgdl_LoadFBX("assets/Plane.fbx");
     Scene_SetMaterialTexture(terrainScene, "Material", tilesTexture);
@@ -118,7 +119,8 @@ void SaucerGame::init() {
         grassSprites[i].sprite = grassSprite;
         grassSprites[i].position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
         grassSprites[i].position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        grassSprites[i].position.z = 0.0f;
+        // HAX use these as star positions
+        grassSprites[i].position.z = Random_Float(-300.0f, 0.0f);
         grassSprites[i].euler.x = 90.0f;
         grassSprites[i].euler.y = 0.0f;
         grassSprites[i].euler.z = Random_Float(0.0f, 180.0f);
@@ -143,6 +145,10 @@ void SaucerGame::init() {
 
     mooSfxTimer = 0.0f;
 
+    ufo.state = Idle;
+    ufo.movementSpeed = 2.0f;
+    ufo.handedness = LeftHanded;
+
     Start_Init();
     End_Init();
 
@@ -156,11 +162,55 @@ void SaucerGame::update()
         case StartScreen:
 
             break;
+
+        case SpaceTravel:
+            update_space();
+            break;
+
+        case SaucerEnter:
+
+            break;
+
         case CowHunt:
             update_gameloop();
             break;
+
+        case SaucerExit:
+            update_saucerExit();
+            break;
+
         case EndScreen:
 
+            break;
+    }
+}
+
+void SaucerGame::draw() {
+    switch(currentState)
+    {
+        case StartScreen:
+        {
+            bool startGame = Start_Run();
+            if (startGame)
+            {
+                currentState = SpaceTravel;
+            }
+        }
+        break;
+        case SpaceTravel:
+            drawSpace();
+            break;
+        case SaucerEnter:
+           // TODO
+            break;
+        case CowHunt:
+            draw_gameloop();
+            break;
+        case SaucerExit:
+            draw_gameloop();
+            break;
+        case EndScreen:
+            End_Run();
             break;
     }
 }
@@ -179,66 +229,10 @@ void SaucerGame::update_gameloop() {
    
     //////// INPUT ///////////
 
-    WiiController *controller = mgdl_GetController(0);
-    float roll = WiiController_GetRoll(controller);
-    float pitch = WiiController_GetPitch(controller);
-    //float yaw = WiiController_GetYaw(controller);
-    bool button_beam_pressed = WiiController_ButtonHeld(controller, WiiButtons::ButtonA);
-
-    // DANGER DEBUG
-    if (WiiController_ButtonPress(controller, ButtonPlus))
-    {
-        End_CalculateScore(1, 1);
-        currentState = EndScreen;
-    }
-
-    if (button_beam_pressed)
-    {
-        ufoState = Beaming;
-        if(isBeamSoundPaused)
-        {
-            isBeamSoundPaused = false;
-            Sound_Play(sfxBeam);
-        }
-    }
-    else
-    {
-        ufoState = Idle;
-        if(!isBeamSoundPaused)
-        {
-            isBeamSoundPaused = true;
-            Sound_Stop(sfxBeam);
-        }
-    }
-
-    ///////////////////////
-    const float tilt_normal_max = 0.5f;
-    float tilt_forward = std::max(-0.5f, std::min(roll, 0.5f));
-    float tilt_side = std::max(-0.5f, std::min(pitch, 0.5f));
-    float tilt_forward_norm = tilt_forward / tilt_normal_max;
-    float tilt_side_norm = tilt_side / tilt_normal_max;
-
-    V3f move_desire = V3f_Create(-tilt_forward_norm, -tilt_side_norm, 0.);
-    const float move_speed = 2.0;
-    V3f move_delta = V3f_Create(0,0,0);
-    V3f_Scale(move_desire, move_speed * timeDelta, move_delta);
-
-
-    //////// SCENE ///////////
-
-    // UFO
-    V3f_Add(
-        ufoScene->rootNode->transform->position,
-        move_delta,
-        ufoScene->rootNode->transform->position
-    );
-    ufoScene->rootNode->transform->position.z = cos(time * 12.f) * 0.25 + 1.8;
-    ufoScene->rootNode->transform->rotationDegrees.y = Rad2Deg(-tilt_forward);
-    ufoScene->rootNode->transform->rotationDegrees.x = Rad2Deg(tilt_side);
+    moveUfo(time, timeDelta);
 
     updateCowBeaming(timeDelta);
 
-    Node_FindChildByName(ufoScene->rootNode, "Disc")->transform->rotationDegrees.z += 150.0f * V3f_Length(move_delta);
 
     // Camera
     V3f cam_pos_target;
@@ -255,11 +249,17 @@ void SaucerGame::update_gameloop() {
     {
         // YOU WIN!
         End_CalculateScore(iceCreamMeterProgress, time);
-        currentState = EndScreen;
+        if(!isBeamSoundPaused)
+        {
+            isBeamSoundPaused = true;
+            Sound_Stop(sfxBeam);
+        }
+        saucerExitStartTime = time;
+        currentState = SaucerExit;
 
     }
     
-    if (button_beam_pressed) {
+    if (ufo.state != Idle) {
         // Melt ice cream
         iceCreamMeterProgress = std::max(0.f, iceCreamMeterProgress - timeDelta * 0.0025f);
     }
@@ -268,26 +268,211 @@ void SaucerGame::update_gameloop() {
     mooSfxTimer += timeDelta;
 }
 
-void SaucerGame::draw() {
-    switch(currentState)
+void SaucerGame::moveUfo(float time, float timeDelta)
+{
+    WiiController *controller = mgdl_GetController(0);
+    float roll = WiiController_GetRoll(controller);
+    float pitch = WiiController_GetPitch(controller);
+    if (ufo.handedness == RightHanded)
     {
-        case StartScreen:
+        roll *= -1.0f;
+        pitch *= -1.0f;
+    }
+
+    ///////////////////////
+    const float tilt_normal_max = 0.5f;
+    float tilt_forward = std::max(-0.5f, std::min(roll, 0.5f));
+    float tilt_side = std::max(-0.5f, std::min(pitch, 0.5f));
+    float tilt_forward_norm = tilt_forward / tilt_normal_max;
+    float tilt_side_norm = tilt_side / tilt_normal_max;
+
+    V3f move_desire = V3f_Create(-tilt_forward_norm, -tilt_side_norm, 0.);
+    V3f move_delta = V3f_Create(0,0,0);
+    V3f_Scale(move_desire, ufo.movementSpeed * timeDelta, move_delta);
+
+    //////// SCENE ///////////
+
+    // UFO
+    V3f_Add(
+        ufoScene->rootNode->transform->position,
+        move_delta,
+        ufoScene->rootNode->transform->position
+    );
+    ufoScene->rootNode->transform->position.z = cos(time * 12.f) * 0.25 + 1.8;
+    ufoScene->rootNode->transform->rotationDegrees.y = Rad2Deg(-tilt_forward);
+    ufoScene->rootNode->transform->rotationDegrees.x = Rad2Deg(tilt_side);
+
+    Node_FindChildByName(ufoScene->rootNode, "Disc")->transform->rotationDegrees.z += 150.0f * V3f_Length(move_delta);
+
+    //float yaw = WiiController_GetYaw(controller);
+    bool button_beam_pressed = WiiController_ButtonHeld(controller, WiiButtons::ButtonAny);
+
+
+    if (button_beam_pressed)
+    {
+        ufo.state = Beaming;
+        if(isBeamSoundPaused)
         {
-            bool startGame = Start_Run();
-            if (startGame)
-            {
-                currentState = CowHunt;
-            }
+            isBeamSoundPaused = false;
+            Sound_Play(sfxBeam);
         }
-            break;
-        case CowHunt:
-            draw_gameloop();
-            break;
-        case EndScreen:
-            End_Run();
-            break;
+    }
+    else
+    {
+        ufo.state = Idle;
+        if(!isBeamSoundPaused)
+        {
+            isBeamSoundPaused = true;
+            Sound_Stop(sfxBeam);
+        }
+    }
+
+
+    // DANGER DEBUG
+    if (WiiController_ButtonPress(controller, ButtonPlus))
+    {
+        End_CalculateScore(1, 1);
+        saucerExitStartTime = time;
+        currentState = SaucerExit;
     }
 }
+
+
+void SaucerGame::update_saucerExit()
+{
+    V3f move_desire = V3f_Create(0.0f, 0.0f, 1.0f);
+    V3f move_delta = V3f_Create(0,0,1);
+    V3f_Scale(move_desire, ufo.movementSpeed * mgdl_GetDeltaTime(), move_delta);
+    V3f_Add(
+        ufoScene->rootNode->transform->position,
+        move_delta,
+        ufoScene->rootNode->transform->position
+    );
+    ufoScene->rootNode->transform->rotationDegrees.y = 0.0f;
+    ufoScene->rootNode->transform->rotationDegrees.x = 0.0f;
+
+    Node_FindChildByName(ufoScene->rootNode, "Disc")->transform->rotationDegrees.z += 150.0f * 1.0f;
+
+    float exitElapsed = mgdl_GetElapsedSeconds() - saucerExitStartTime;
+    if (exitElapsed > saucerExitDuration)
+    {
+        currentState = EndScreen;
+    }
+}
+
+
+void SaucerGame::drawSpace()
+{
+    Color4f *color_space = Color_GetDefaultColor(Color_Black);
+    mgdl_glClearColor4f(color_space);
+
+    mgdl_InitPerspectiveProjection(90, 0.1, 128. );
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    V3f cam_lookat = V3f_Create(0.0f, 0.0f, -1.0f);
+    V3f cam_pos = V3f_Create(0.0f, 0.0f, 0.0f);
+    mgdl_InitCamera(cam_pos, cam_lookat, V3f_Create(0., 1., 0.));
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_TRUE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glShadeModel(GL_FLAT);
+
+    // TODO draw starfield
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glPushMatrix();
+    glPointSize(2.0f);
+    glBegin(GL_POINTS);
+    for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
+    {
+        glVertex3f(grassSprites[i].position.x, grassSprites[i].position.y, grassSprites[i].position.z);
+    }
+    glEnd();
+    glPointSize(1.0f);
+    glPopMatrix();
+    mgdl_glSetTransparency(true);
+
+    ufoScene->rootNode->transform->position.z = -3.0f;
+    ufoScene->rootNode->transform->position.y = -2.0f;
+    ufoScene->rootNode->transform->rotationDegrees.y = 0.0f;
+    ufoScene->rootNode->transform->rotationDegrees.x = -90.0f;
+
+    glPushMatrix();
+    Scene_Draw(ufoScene);
+    glPopMatrix();
+
+    mgdl_InitOrthoProjection();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    // Select if right or left handed
+    glDisable(GL_CULL_FACE);
+    Menu_Start(debugMenu, 64,  mgdl_GetScreenHeight()-64, mgdl_GetScreenWidth()/3);
+
+    Menu_BeginRow(debugMenu);
+    if (Menu_TexturedButton(debugMenu, rightHandControls, FlipVertical))
+    {
+        ufo.handedness = LeftHanded;
+    }
+    Menu_Skip(debugMenu, 64);
+    if (Menu_TexturedButton(debugMenu, rightHandControls, FlipNone))
+    {
+        ufo.handedness = RightHanded;
+    }
+
+    Menu_EndRow(debugMenu);
+
+    if (ufo.handedness == RightHanded)
+    {
+        Menu_Text(debugMenu, "Right handed controls");
+    }
+    else
+    {
+        Menu_Text(debugMenu, "Left handed controls");
+    }
+    Menu_Text(debugMenu, "Hold B (trigger) to confirm");
+    Menu_DrawCursor(debugMenu);
+    glEnable(GL_CULL_FACE);
+}
+
+void SaucerGame::update_space()
+{
+    float delta = mgdl_GetDeltaTime();
+    float starSpeed = 32.0f;
+
+    for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
+    {
+        grassSprites[i].position.z += delta * starSpeed;
+        if (grassSprites[i].position.z > 0.0f)
+        {
+            grassSprites[i].position.z = -300.0f;
+        }
+    }
+    Node_FindChildByName(ufoScene->rootNode, "Disc")->transform->rotationDegrees.z += 150.0f * 0.4f * delta;
+    Node_FindChildByName(ufoScene->rootNode, "Beam")->transform->scale.z = 0.0f;
+
+    if (WiiController_ButtonHeld(mgdl_GetController(0), ButtonB))
+    {
+        for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
+        {
+            grassSprites[i].position.z = 0.0f;
+        }
+        // TODO saucer enter
+        currentState = CowHunt;
+    }
+}
+
+void SaucerGame::setCamera()
+{
+    V3f cam_lookat;
+    float cam_angle = Deg2Rad(mainCameraTransform.rotationDegrees.y);
+    V3f_Add(mainCameraTransform.position, V3f_Create(cos(cam_angle), 0., sin(cam_angle)), cam_lookat);
+    mgdl_InitCamera(mainCameraTransform.position, cam_lookat, V3f_Create(0., 0., 1.));
+}
+
 
 void SaucerGame::draw_gameloop()
 {
@@ -298,10 +483,7 @@ void SaucerGame::draw_gameloop()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    V3f cam_lookat;
-    float cam_angle = Deg2Rad(mainCameraTransform.rotationDegrees.y);
-    V3f_Add(mainCameraTransform.position, V3f_Create(cos(cam_angle), 0., sin(cam_angle)), cam_lookat);
-    mgdl_InitCamera(mainCameraTransform.position, cam_lookat, V3f_Create(0., 0., 1.));
+    setCamera();
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -317,16 +499,50 @@ void SaucerGame::draw_gameloop()
     Scene_Draw(mainScene);
     glPopMatrix();
 
+    draw_grass();
+
+    drawUI();
+
+}
+
+void SaucerGame::draw_grass()
+{
     glDisable(GL_CULL_FACE);
     bool animateGrassThisFrame = mgdl_GetElapsedFrames() % 15 == 1;
+    Sprite* sprite = grassSprite;
+    float scale = 0.33f;
+    float width = sprite->_font->_aspect * scale;
+    float height = scale;
+    const float uvW = sprite->_font->_uvWidth;
+    const float uvH = sprite->_font->_uvHeight;
+    glPushMatrix();
+    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
+    mgdl_glColor4f(Color_GetDefaultColor(Color_White));
+    Sprite_BeginDrawBatch(grassSprite);
     for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
     {
-        glPushMatrix();
-        glTranslatef(grassSprites[i].position.x, grassSprites[i].position.y, grassSprites[i].position.z);
-        glRotatef(grassSprites[i].euler.z, 0.0f, 0.0f, 1.0f);
-        glRotatef(grassSprites[i].euler.y, 0.0f, 1.0f, 0.0f);
-        glRotatef(grassSprites[i].euler.x, 1.0f, 0.0f, 0.0f);
-        Sprite_Draw3D(grassSprites[i].sprite, grassSprites[i].frame, grassSprites[i].scale, Centered, RJustify, Color_GetDefaultColor(Color_White));
+        // glTranslatef(grassSprites[i].position.x, grassSprites[i].position.y, grassSprites[i].position.z);
+
+        // Sprite_Draw3DBatched(grassSprites[i].sprite, grassSprites[i].frame, grassSprites[i].position, grassSprites[i].scale, Centered, RJustify, Color_GetDefaultColor(Color_White));
+        V3f drawPos = Sprite_AdjustDrawingPosition3D(sprite, grassSprites[i].position, scale, Centered, RJustify);
+
+        V2f tx= _Font_GetTextureCoordinate(sprite->_font, grassSprites[i].frame); //LOW LEFT!
+
+        // LOW LEFT!
+        glTexCoord2f(V2f_X(tx), V2f_Y(tx));
+        glVertex3f(V3f_X(drawPos), V3f_Y(drawPos), V3f_Z(drawPos));
+
+        // LOW RIGHT
+        glTexCoord2f(V2f_X(tx) + uvW, V2f_Y(tx));
+        glVertex3f(V3f_X(drawPos) + width, V3f_Y(drawPos), V3f_Z(drawPos));
+
+        // TOP RIGHT
+        glTexCoord2f(V2f_X(tx) + uvW, V2f_Y(tx) + uvH);
+        glVertex3f(V3f_X(drawPos) + width, V3f_Y(drawPos), V3f_Z(drawPos) + height);
+
+        // TOP LEFT
+        glTexCoord2f(V2f_X(tx), V2f_Y(tx) + uvH);
+        glVertex3f(V3f_X(drawPos), V3f_Y(drawPos), V3f_Z(drawPos) + height);
         if(animateGrassThisFrame)
         {
             grassSprites[i].frame++;
@@ -335,16 +551,20 @@ void SaucerGame::draw_gameloop()
                 grassSprites[i].frame = 0;
             }
         }
-        glPopMatrix();
     }
+    Sprite_EndDrawBatch();
+    glPopMatrix();
     glEnable(GL_CULL_FACE);
 
+}
+
+void SaucerGame::drawUI()
+{
     mgdl_InitOrthoProjection();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Menu_SetActive(debugMenu);
-    Menu_Start(24, mgdl_GetScreenHeight()-8, mgdl_GetScreenWidth());
-    
+    Menu_Start(debugMenu, 24, mgdl_GetScreenHeight()-8, mgdl_GetScreenWidth());
+
     #ifdef SHOW_DEBUG_TEXT
     Menu_Text(debugstream.str().c_str());
     #endif
@@ -389,7 +609,7 @@ void SaucerGame::quit() {
 
 void SaucerGame::Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor)
 {
-	V3f drawPos = Sprite_AdjustDrawingPosition(sprite, x, y, scale, alignX, alignY);
+	V3f drawPos = Sprite_AdjustDrawingPosition2D(sprite, x, y, scale, alignX, alignY);
 	float width = sprite->_font->_aspect * scale * progress;
 	float height = scale;
 	const float uvW = sprite->_font->_uvWidth * progress;
@@ -428,7 +648,7 @@ void SaucerGame::Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, 
 
 void SaucerGame::updateCowBeaming(float timeDelta) {
 
-    if (ufoState == Beaming) {
+    if (ufo.state == Beaming) {
 #ifdef SHOW_DEBUG_TEXT
         debugstream << "BEAMING!" << std::endl;
 #endif
@@ -463,25 +683,25 @@ void SaucerGame::updateCowBeaming(float timeDelta) {
         cows[i].stress = std::max(0.f, std::min(cows[i].stress - timeDelta * 0.2f + stressfulness * 0.4f * timeDelta, 1.f));
         stress_max = std::max(stress_max, cows[i].stress);
 
-        if (ufoState == Beaming) {
+        if (ufo.state == Beaming) {
             if (distance < 0.4f) {
                 #ifdef SHOW_DEBUG_TEXT
                 debugstream << "MILKING!" << std::endl;
                 #endif
-                ufoState = Milking;
+                ufo.state = Milking;
                 addMilkTick(timeDelta, cow.stress);
                 PlayMooSfx(cow.stress > 0.5f);
             }
             else
             {
-                ufoState = Beaming;
+                ufo.state = Beaming;
             }
 
             if (distance_plane < 0.5f) {
                 #ifdef SHOW_DEBUG_TEXT
                 debugstream << "LIFTING!" << std::endl;
                 #endif
-                ufoState = Lifting;
+                ufo.state = Lifting;
                 cow.behavior = CowState::BehaviorState::lifted;
                 
                 cow.speed.x = cow_saucer_diff.x * 0.1f;
@@ -494,7 +714,7 @@ void SaucerGame::updateCowBeaming(float timeDelta) {
             }
             else
             {
-                ufoState = Beaming;
+                ufo.state = Beaming;
             }
         }
         
@@ -548,8 +768,8 @@ void SaucerGame::updateCowBeaming(float timeDelta) {
         // When in air and falling, draw the parachute
         if (cow.behavior == CowState::BehaviorState::lifted
             && cow.speed.z < 0.0f
-            && ufoState != Milking
-            && ufoState != Lifting)
+            && ufo.state != Milking
+            && ufo.state != Lifting)
         {
             Node_EnableDrawing(cow.parachute);
         }
