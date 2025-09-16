@@ -44,6 +44,8 @@ class SaucerGame {
 public:
     SaucerGame() = default;
     void init();
+    void reset_game();
+
     void update();
     void draw();
     void drawSpace();
@@ -130,6 +132,8 @@ public:
     Music* music;
     bool isBeamSoundPaused = false;
     float mooSfxTimer;
+
+    float gameTimer;
 
     std::stringstream debugstream;
 };

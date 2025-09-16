@@ -17,8 +17,14 @@
 #include <cmath>
 #include <cstddef>
 
+
+
 #include "start-screen.h"
 #include "end-screen.h"
+#ifdef GEKKO
+#include <mp3player.h>
+#include "blossom_mp3.h"
+#endif
 
 // Uncomment to show debug text
 //#define SHOW_DEBUG_TEXT
@@ -35,8 +41,6 @@ static void randomizeCowTargetPosition(SaucerGame::CowState &cow) {
 
 void SaucerGame::init() {
     
-    Random_SetSeed(WiiController_GetRoll(mgdl_GetController(0)) * WiiController_GetPitch(mgdl_GetController(0)));
-
     debugMenu = Menu_Create(DefaultFont_GetDefaultFont(), 2.0f, 2.1f);
 
     mainScene = Scene_CreateEmpty();
@@ -52,16 +56,7 @@ void SaucerGame::init() {
     cowScene = mgdl_LoadFBX("assets/Cow.fbx");
     Scene_SetMaterialTexture(cowScene, "Material", ufoTexture);
     for (size_t i = 0; i < cows.size(); ++i) {
-        cows[i].behavior = CowState::BehaviorState::grace;
-        cows[i].speed = V3f_Create(0, 0, 0);
-        cows[i].stress = 0;
         cows[i].node = Node_Clone(Scene_GetRootNode(cowScene), (NodeTransform|NodeChildren));
-        cows[i].node->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        cows[i].node->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        cows[i].node->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
-        cows[i].parachute = Node_FindChildByIndex(cows[i].node, 7);
-        Node_DisableDrawing(cows[i].parachute);
-        randomizeCowTargetPosition(cows[i]);
         Scene_AddChildNode(mainScene, mainScene->rootNode, cows[i].node);
     }
 
@@ -75,16 +70,6 @@ void SaucerGame::init() {
     for(int i = 0; i < TREE_MODEL_AMOUNT; ++i)
     {
         treeNodes[i] = Node_Clone(Scene_GetRootNode(treeScene), (NodeTransform|NodeChildren));
-        treeNodes[i]->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        treeNodes[i]->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        treeNodes[i]->transform->position.z = 0.0f;
-        treeNodes[i]->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
-        treeNodes[i]->transform->rotationDegrees.y = 0.0f;
-        treeNodes[i]->transform->rotationDegrees.x = 0.0f;
-        float scale = 0.75f + Random_Float(0.0f, 0.3f);
-        treeNodes[i]->transform->scale.z = scale;
-        treeNodes[i]->transform->scale.y = scale;
-        treeNodes[i]->transform->scale.x = scale;
         Scene_AddChildNode(mainScene, mainScene->rootNode, treeNodes[i]);
     }
 
@@ -94,16 +79,6 @@ void SaucerGame::init() {
     for(int i = 0; i < BUSH_MODEL_AMOUNT; ++i)
     {
         bushNodes[i] = Node_Clone(Scene_GetRootNode(bushScene), (NodeTransform|NodeChildren));
-        bushNodes[i]->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        bushNodes[i]->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        bushNodes[i]->transform->position.z = 0.0f;
-        bushNodes[i]->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
-        bushNodes[i]->transform->rotationDegrees.y = 0.0f;
-        bushNodes[i]->transform->rotationDegrees.x = 0.0f;
-        float scale = 0.75f + Random_Float(0.0f, 0.3f);
-        bushNodes[i]->transform->scale.z = scale;
-        bushNodes[i]->transform->scale.y = scale;
-        bushNodes[i]->transform->scale.x = scale;
         Scene_AddChildNode(mainScene, mainScene->rootNode, bushNodes[i]);
     }
 
@@ -114,19 +89,6 @@ void SaucerGame::init() {
     grassSprite = mgdl_LoadSprite("assets/Grass.png", 16, 16);
 
     grassSprites = (AnimatedWorldSprite*)malloc(sizeof(AnimatedWorldSprite) * GRASS_SPRITE_AMOUNT);
-    for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
-    {
-        grassSprites[i].sprite = grassSprite;
-        grassSprites[i].position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        grassSprites[i].position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
-        // HAX use these as star positions
-        grassSprites[i].position.z = Random_Float(-300.0f, 0.0f);
-        grassSprites[i].euler.x = 90.0f;
-        grassSprites[i].euler.y = 0.0f;
-        grassSprites[i].euler.z = Random_Float(0.0f, 180.0f);
-        grassSprites[i].scale = 0.33f;
-        grassSprites[i].frame = Random_Int(0, GRASS_SPRITE_FRAME_COUNT);
-    }
 
     sfxCommonMoos[0] = mgdl_LoadSound("assets/sfx/deepmoo01.wav");
     sfxCommonMoos[1] = mgdl_LoadSound("assets/sfx/deepmoo04.wav");
@@ -140,19 +102,92 @@ void SaucerGame::init() {
     sfxBeam = mgdl_LoadSound("assets/sfx/wavloop_beam.wav");
     Sound_SetLooping(sfxBeam, true);
 
+#ifdef GEKKO
+    MP3Player_Init();
+
+
+#else
     music = mgdl_LoadOgg("assets/blossom_mountain_140bpm.ogg");
-    Music_Play(music, true);
+#endif
 
-    mooSfxTimer = 0.0f;
-
-    ufo.state = Idle;
-    ufo.movementSpeed = 2.0f;
-    ufo.handedness = LeftHanded;
 
     Start_Init();
     End_Init();
 
+    reset_game();
+
+}
+
+void SaucerGame::reset_game()
+{
     currentState = StartScreen;
+    mooSfxTimer = 0.0f;
+
+    ufo.state = Idle;
+    ufo.movementSpeed = 2.0f;
+    ufo.handedness = RightHanded;
+    iceCreamMeterProgress = 0.0f;
+    gameTimer = 0.0f;
+
+    Random_SetSeed(WiiController_GetRoll(mgdl_GetController(0)) * WiiController_GetPitch(mgdl_GetController(0)));
+    for(int i = 0; i < GRASS_SPRITE_AMOUNT; ++i)
+    {
+        grassSprites[i].sprite = grassSprite;
+        grassSprites[i].position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        grassSprites[i].position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        // HAX use these as star positions
+        grassSprites[i].position.z = Random_Float(-300.0f, 0.0f);
+        grassSprites[i].euler.x = 90.0f;
+        grassSprites[i].euler.y = 0.0f;
+        grassSprites[i].euler.z = Random_Float(0.0f, 180.0f);
+        grassSprites[i].scale = 0.33f;
+        grassSprites[i].frame = Random_Int(0, GRASS_SPRITE_FRAME_COUNT);
+    }
+    for(int i = 0; i < BUSH_MODEL_AMOUNT; ++i)
+    {
+        bushNodes[i] = Node_Clone(Scene_GetRootNode(bushScene), (NodeTransform|NodeChildren));
+        bushNodes[i]->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        bushNodes[i]->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        bushNodes[i]->transform->position.z = 0.0f;
+        bushNodes[i]->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
+        bushNodes[i]->transform->rotationDegrees.y = 0.0f;
+        bushNodes[i]->transform->rotationDegrees.x = 0.0f;
+        float scale = 0.75f + Random_Float(0.0f, 0.3f);
+        bushNodes[i]->transform->scale.z = scale;
+        bushNodes[i]->transform->scale.y = scale;
+        bushNodes[i]->transform->scale.x = scale;
+    }
+
+    for(int i = 0; i < TREE_MODEL_AMOUNT; ++i)
+    {
+        treeNodes[i]->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        treeNodes[i]->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        treeNodes[i]->transform->position.z = 0.0f;
+        treeNodes[i]->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
+        treeNodes[i]->transform->rotationDegrees.y = 0.0f;
+        treeNodes[i]->transform->rotationDegrees.x = 0.0f;
+        float scale = 0.75f + Random_Float(0.0f, 0.3f);
+        treeNodes[i]->transform->scale.z = scale;
+        treeNodes[i]->transform->scale.y = scale;
+        treeNodes[i]->transform->scale.x = scale;
+    }
+    for (size_t i = 0; i < cows.size(); ++i) {
+        cows[i].behavior = CowState::BehaviorState::grace;
+        cows[i].speed = V3f_Create(0, 0, 0);
+        cows[i].stress = 0;
+        cows[i].node->transform->position.x = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        cows[i].node->transform->position.y = Random_FloatNormalized() * MAP_SIZE - MAP_SIZE / 2.0f;
+        cows[i].node->transform->rotationDegrees.z = Rad2Deg(Random_Float(0.0f, 180.0f));
+        cows[i].parachute = Node_FindChildByIndex(cows[i].node, 7);
+        Node_DisableDrawing(cows[i].parachute);
+        randomizeCowTargetPosition(cows[i]);
+    }
+
+#ifdef GEKKO
+    MP3Player_PlayBuffer(blossom_mp3, blossom_mp3_size, NULL);
+#else
+    Music_Play(music, true);
+#endif
 }
 
 void SaucerGame::update()
@@ -183,6 +218,14 @@ void SaucerGame::update()
 
             break;
     }
+#ifdef GEKKO
+// On Wii need to manually restart music if it stops
+    if (MP3Player_IsPlaying() == false)
+    {
+        MP3Player_PlayBuffer(blossom_mp3, blossom_mp3_size, NULL);
+    }
+
+#endif
 }
 
 void SaucerGame::draw() {
@@ -210,7 +253,11 @@ void SaucerGame::draw() {
             draw_gameloop();
             break;
         case EndScreen:
-            End_Run();
+            if (End_Run())
+            {
+                reset_game();
+                currentState = SpaceTravel;
+            }
             break;
     }
 }
@@ -248,7 +295,8 @@ void SaucerGame::update_gameloop() {
     if (iceCreamMeterProgress >= 1.0f)
     {
         // YOU WIN!
-        End_CalculateScore(iceCreamMeterProgress, time);
+        End_Reset();
+        End_CalculateScore(iceCreamMeterProgress, gameTimer);
         if(!isBeamSoundPaused)
         {
             isBeamSoundPaused = true;
@@ -266,6 +314,7 @@ void SaucerGame::update_gameloop() {
 
     // AUDIO
     mooSfxTimer += timeDelta;
+    gameTimer += timeDelta;
 }
 
 void SaucerGame::moveUfo(float time, float timeDelta)
@@ -339,7 +388,9 @@ void SaucerGame::moveUfo(float time, float timeDelta)
     // DANGER DEBUG
     if (WiiController_ButtonPress(controller, ButtonPlus))
     {
+        End_Reset();
         End_CalculateScore(1, 1);
+
         saucerExitStartTime = time;
         currentState = SaucerExit;
     }
@@ -421,11 +472,27 @@ void SaucerGame::drawSpace()
     Menu_Start(debugMenu, 64,  mgdl_GetScreenHeight()-64, mgdl_GetScreenWidth()/3);
 
     Menu_BeginRow(debugMenu);
+    if (ufo.handedness == LeftHanded)
+    {
+        short x = debugMenu->drawx;
+        short y = debugMenu->drawy;
+        const short w = debugMenu->menuWidth;
+        const short h = w / rightHandControls->aspectRatio;
+        Draw2D_Rect(x,y ,x+w ,y-h , &debugMenu->highlight);
+    }
     if (Menu_TexturedButton(debugMenu, rightHandControls, FlipVertical))
     {
         ufo.handedness = LeftHanded;
     }
     Menu_Skip(debugMenu, 64);
+    if (ufo.handedness == RightHanded)
+    {
+        short x = debugMenu->drawx;
+        short y = debugMenu->drawy;
+        const short w = debugMenu->menuWidth;
+        const short h = w / rightHandControls->aspectRatio;
+        Draw2D_Rect(x,y ,x+w ,y-h , &debugMenu->highlight);
+    }
     if (Menu_TexturedButton(debugMenu, rightHandControls, FlipNone))
     {
         ufo.handedness = RightHanded;
@@ -596,24 +663,6 @@ void SaucerGame::drawUI()
     //Scene_DebugDraw(mainScene, debugMenu, 32, mgdl_GetScreenHeight()-8, 0);
 }
 
-void SaucerGame::quit() {
-
-    for(int i = 0; i < BUSH_MODEL_AMOUNT; ++i)
-    {
-        free(bushNodes[i]);
-    }
-    for(int i = 0; i < TREE_MODEL_AMOUNT; ++i)
-    {
-        free(treeNodes[i]);
-    }
-    for (size_t i = 0; i < cows.size(); ++i) {
-        free(cows[i].node);
-    }
-
-    free(treeScene);
-    free(bushScene);
-    free(cowScene);
-}
 
 void SaucerGame::Sprite_Draw2DClipped(Sprite* sprite, u16 spriteIndex, short x, short y, float scale, float progress, AlignmentModes alignX, AlignmentModes alignY, Color4f* tintColor)
 {
@@ -814,4 +863,27 @@ void SaucerGame::PlayMooSfx(bool melted)
         }
         mooSfxTimer = 0.0f;
     }
+}
+void SaucerGame::quit() {
+
+#ifdef GEKKO
+    MP3Player_Stop();
+#else
+    Music_Stop(music);
+#endif
+    for(int i = 0; i < BUSH_MODEL_AMOUNT; ++i)
+    {
+        free(bushNodes[i]);
+    }
+    for(int i = 0; i < TREE_MODEL_AMOUNT; ++i)
+    {
+        free(treeNodes[i]);
+    }
+    for (size_t i = 0; i < cows.size(); ++i) {
+        free(cows[i].node);
+    }
+
+    free(treeScene);
+    free(bushScene);
+    free(cowScene);
 }
